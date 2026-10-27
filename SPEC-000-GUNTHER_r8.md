@@ -21,6 +21,8 @@
 5.  **Taxonomía cerrada de skills ratificada** (M-06, Q-16).
 6.  **Q-01 a Q-16 cerradas**; §21 reescrita; §1.7 nueva con el estado de las decisiones; DP0 cerrado.
 
+> **Nota sobre versiones.** Este documento es **r8**, la revisión vigente. `SPEC-000-GUNTHER_r7.md` se conserva como **histórico** y no debe usarse para implementar. Las referencias a "r7", "r6" o "r5" en los Anexos A, B y D son históricas: describen cambios que ya están aplicados en r8.
+
 ---
 
 ## 0 · Preliminares
