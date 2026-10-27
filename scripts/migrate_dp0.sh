@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
-# migrate_dp0.sh — Migración DP0 (2026-10-26)
+# migrate_dp0.sh — v2 (portable, sin backups, idempotente)
 #
 # Cambia el estado de los ADRs que siguen en "propuesta" a "aceptada (DP0, r8)".
-# No toca los que ya están aceptados, sustituidos o rechazados.
-# No toca las notas internas del ADR: solo la línea "**Estado**:" de la cabecera.
+# Portable: funciona en GNU sed (Linux) y BSD sed (macOS).
+# No crea backups.
+# Idempotente: se puede ejecutar varias veces sin efectos adversos.
 #
-# Ejecutar UNA VEZ desde la raíz del repositorio:
+# Ejecutar desde la raíz del repositorio:
 #     bash scripts/migrate_dp0.sh
 #
-# Después:
-#     grep -rE '^\*\*Estado\*\*: propuesta' docs/08-decisiones/ADR-*.md
+# Verificación manual posterior:
+#     grep -l '^- \*\*Estado\*\*: propuesta' docs/08-decisiones/ADR-*.md
 # debe devolver cero líneas.
 
 set -euo pipefail
@@ -25,10 +26,10 @@ skipped=0
 
 for f in "$DIR"/ADR-*.md; do
   [ -f "$f" ] || continue
-  if head -10 "$f" | grep -qE '^\- \*\*Estado\*\*: (propuesta( \(resuelta por delegación del dueño en r7\))?)$'; then
-    sed -i -E \
-      's/^\- \*\*Estado\*\*: propuesta( \(resuelta por delegación del dueño en r7\))?$/- **Estado**: aceptada (DP0, r8)/' \
-      "$f"
+  if grep -q '^- \*\*Estado\*\*: propuesta' "$f"; then
+    tmp="$(mktemp "${f}.XXXXXX")"
+    sed 's/^- \*\*Estado\*\*: propuesta.*$/- **Estado**: aceptada (DP0, r8)/' "$f" > "$tmp"
+    mv "$tmp" "$f"
     echo "Actualizado: $f"
     changed=$((changed + 1))
   else
@@ -41,4 +42,9 @@ echo "Archivos actualizados: $changed"
 echo "Archivos sin cambio (ya aceptados, sustituidos o rechazados): $skipped"
 echo
 echo "Verificación:"
-grep -rE '^\*\*Estado\*\*: propuesta' "$DIR"/ADR-*.md 2>/dev/null || echo "  Ningún ADR sigue en 'propuesta'. OK."
+if grep -l '^- \*\*Estado\*\*: propuesta' "$DIR"/ADR-*.md 2>/dev/null; then
+  echo "FALLO: los archivos anteriores siguen en 'propuesta'." >&2
+  exit 1
+else
+  echo "  Ningún ADR sigue en 'propuesta'. OK."
+fi
