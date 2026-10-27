@@ -1,6 +1,6 @@
 # ADR D-88 — Defecto del refusal y reglas invariantes
 
-- **Estado**: propuesta (resuelta por delegación del dueño en r7)
+- **Estado**: aceptada (DP0, r8)
 - **Fecha**: 2026-10-26
 - **Fuente**: SPEC §6.9; resuelve J-04 (D-09, D-11)
 

@@ -1,6 +1,6 @@
 # ADR D-54 — MCP en la revisión 2026-07-28 con compatibilidad 2025-11-25
 
-- **Estado**: propuesta
+- **Estado**: aceptada (DP0, r8)
 - **Fecha**: 2026-10-25
 - **SPEC**: SPEC-000-GUNTHER r6
 

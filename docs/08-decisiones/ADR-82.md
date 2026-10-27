@@ -1,6 +1,6 @@
 # ADR D-82 — Afinidad de caché en el router
 
-- **Estado**: propuesta
+- **Estado**: aceptada (DP0, r8)
 - **Fecha**: 2026-10-26
 - **Fuente**: SPEC §22.12
 

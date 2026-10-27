@@ -1,6 +1,6 @@
 # ADR D-89 — Colocación y medida: reserva, reintento, capas y fuente única
 
-- **Estado**: propuesta (resuelta por delegación del dueño en r7)
+- **Estado**: aceptada (DP0, r8)
 - **Fecha**: 2026-10-26
 - **Fuente**: SPEC §11.1, §11.3; resuelve J-12 a J-16 (D-27, D-28)
 

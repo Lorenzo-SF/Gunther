@@ -1,6 +1,6 @@
 # ADR D-74 — La coral (colmena y equipo como modalidades)
 
-- **Estado**: propuesta
+- **Estado**: aceptada (DP0, r8)
 - **Fecha**: 2026-10-26
 - **Fuente**: SPEC §22.1, §22.2, §22.9; peticiones del dueño del 2026-10-26
 

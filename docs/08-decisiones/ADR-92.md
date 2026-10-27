@@ -1,6 +1,6 @@
 # ADR D-92 — Resoluciones del RAG y de los adjuntos
 
-- **Estado**: propuesta (resuelta por delegación del dueño en r7)
+- **Estado**: aceptada (DP0, r8)
 - **Fecha**: 2026-10-26
 - **Fuente**: SPEC §8, §12.2; resuelve I-12, I-14, I-15 e I-20 (y corrige el motivo de D-35)
 

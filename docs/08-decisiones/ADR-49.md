@@ -1,6 +1,6 @@
 # ADR D-49 — Un paquete, dependencias opcionales y CI de fronteras
 
-- **Estado**: propuesta
+- **Estado**: aceptada (DP0, r8)
 - **Fecha**: 2026-10-25
 - **SPEC**: SPEC-000-GUNTHER r6
 

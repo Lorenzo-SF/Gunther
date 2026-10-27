@@ -1,6 +1,6 @@
 # ADR D-85 — Ganchos G1 a G9 antes de 1.0
 
-- **Estado**: propuesta
+- **Estado**: aceptada (DP0, r8)
 - **Fecha**: 2026-10-26
 - **Fuente**: SPEC §22.14
 

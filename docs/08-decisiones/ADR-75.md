@@ -1,6 +1,6 @@
 # ADR D-75 — Un solo plan; tres vías; condiciones cerradas
 
-- **Estado**: propuesta
+- **Estado**: aceptada (DP0, r8)
 - **Fecha**: 2026-10-26
 - **Fuente**: SPEC §22.5, §22.10
 

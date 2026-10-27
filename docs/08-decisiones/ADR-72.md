@@ -1,6 +1,6 @@
 # ADR D-72 — Decisor agnóstico y personalizable; verificación relativa a línea base
 
-- **Estado**: propuesta
+- **Estado**: aceptada (DP0, r8)
 - **Fecha**: 2026-10-25
 - **SPEC**: SPEC-000-GUNTHER r6
 

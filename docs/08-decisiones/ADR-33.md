@@ -1,6 +1,6 @@
 # ADR D-33 — Salidas estructuradas
 
-- **Estado**: propuesta
+- **Estado**: aceptada (DP0, r8)
 - **Fecha**: 2026-10-25
 - **Fuente**: SPEC §4.2.1
 

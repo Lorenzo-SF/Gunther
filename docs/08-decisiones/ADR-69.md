@@ -1,6 +1,6 @@
 # ADR D-69 — Backends GPU soportados en v1
 
-- **Estado**: propuesta
+- **Estado**: aceptada (DP0, r8)
 - **Fecha**: 2026-10-25
 - **SPEC**: SPEC-000-GUNTHER r6
 

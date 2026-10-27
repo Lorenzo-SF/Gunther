@@ -1,6 +1,6 @@
 # ADR D-29 — El LLM decide (capa `:llm`)
 
-- **Estado**: propuesta
+- **Estado**: aceptada (DP0, r8)
 - **Fecha**: 2026-10-25
 - **Fuente**: SPEC §6.1, §6.3, §6.11
 

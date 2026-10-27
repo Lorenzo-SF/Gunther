@@ -1,6 +1,6 @@
 # ADR D-47 — Integración con el ecosistema (arrea, apero, trebejo)
 
-- **Estado**: propuesta
+- **Estado**: aceptada (DP0, r8)
 - **Fecha**: 2026-10-25
 - **Fuente**: SPEC §3
 

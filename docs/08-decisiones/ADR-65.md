@@ -1,6 +1,6 @@
 # ADR D-65 — Identidad física de dispositivos y detector por defecto del propio engine
 
-- **Estado**: propuesta
+- **Estado**: aceptada (DP0, r8)
 - **Fecha**: 2026-10-25
 - **SPEC**: SPEC-000-GUNTHER r6
 

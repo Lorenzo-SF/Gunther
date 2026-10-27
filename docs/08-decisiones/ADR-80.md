@@ -1,6 +1,6 @@
 # ADR D-80 — Sobre de contexto `Gunther.Context`
 
-- **Estado**: propuesta
+- **Estado**: aceptada (DP0, r8)
 - **Fecha**: 2026-10-26
 - **Fuente**: SPEC §22.3, §22.14 (G2)
 

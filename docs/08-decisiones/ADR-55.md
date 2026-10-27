@@ -1,6 +1,6 @@
 # ADR D-55 — La caché de decisiones guarda solo el ranking puro
 
-- **Estado**: propuesta
+- **Estado**: aceptada (DP0, r8)
 - **Fecha**: 2026-10-25
 - **SPEC**: SPEC-000-GUNTHER r6
 

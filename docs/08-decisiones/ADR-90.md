@@ -1,6 +1,6 @@
 # ADR D-90 — Memoria con autor y versión; evento de calidad
 
-- **Estado**: propuesta (resuelta por delegación del dueño en r7)
+- **Estado**: aceptada (DP0, r8)
 - **Fecha**: 2026-10-26
 - **Fuente**: SPEC §7.2, §13.1; resuelve J-06 y J-11 (D-12, D-22)
 
