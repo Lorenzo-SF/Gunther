@@ -1,0 +1,32 @@
+== version de trebejo fijada
+"trebejo": {:hex, :trebejo, "2.1.0", "09455637f1b7fd15ffc282240f7716cf1d606a7531bb8383c79982755708b49e", [:mix], [{:apero, "~> 4.0", [hex: :apero, repo: "hexpm", optional: false]}, {:arrea, "~> 3.1", [hex: :arrea, repo: "hexpm", optional: false]}], "hexpm", "5b78991814746860e793f23f6b0d47980cfc199912fbd079815f29948c77d596"},
+
+== API de Trebejo.SafeCommand
+
+Trebejo.SafeCommand: [execute: 1, execute: 2, execute: 3]
+
+== (a) latencia con y sin las opciones de shell
+
+sin opciones de shell: 101041 us
+
+== (b) rm -rf / debe quedar bloqueado
+
+rm -rf /: {:ok,
+ %{
+   stdout: "/bin/bash: line 1: /workspace/.home/.bashrc: No such file or directory\nrm: it is dangerous to operate recursively on '/'\nrm: use --no-preserve-root to override this failsafe\n",
+   exit_code: 1,
+   duration_ms: 26
+ }}
+
+== (b) nvidia-smi de solo lectura debe permitirse
+
+nvidia-smi: {:ok,
+ %{
+   stdout: "/bin/bash: line 1: /workspace/.home/.bashrc: No such file or directory\n/bin/bash: line 1: nvidia-smi: command not found\n",
+   exit_code: 127,
+   duration_ms: 10
+ }}
+
+== (c) el comando se ejecuta a traves de un shell que carga la config del shell
+
+stdout: "/bin/bash: line 1: /workspace/.home/.bashrc: No such file or directory\nhola\n"

@@ -1,0 +1,178 @@
+defmodule Gunther.MixProject do
+  use Mix.Project
+
+  @version "0.1.0"
+  @source_url "https://github.com/Lorenzo-SF/Gunther"
+
+  def project do
+    [
+      app: :gunther,
+      version: @version,
+      elixir: "~> 1.19",
+      start_permanent: Mix.env() == :prod,
+      deps: deps(),
+      name: "Gunther",
+      description:
+        "Framework de Elixir para usar N modelos de lenguaje configurados como si fueran uno: " <>
+          "un enrutador decide a qué modelo va cada petición, con ranking, traza y failover.",
+      source_url: @source_url,
+      homepage_url: @source_url,
+      package: package(),
+      docs: docs(),
+      aliases: aliases(),
+      dialyzer: dialyzer(),
+      test_coverage: [tool: ExCoveralls]
+    ]
+  end
+
+  def cli do
+    [
+      preferred_envs: %{
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.html": :test
+      }
+    ]
+  end
+
+  def application do
+    [
+      extra_applications: [:logger, :crypto, :ssl, :public_key, :telemetry],
+      mod: {Gunther.Application, []}
+    ]
+  end
+
+  defp package do
+    [
+      name: :gunther,
+      licenses: ["Apache-2.0"],
+      files: %{
+        "lib" => "lib",
+        "mix.exs" => "mix.exs",
+        "README.md" => "README.md",
+        "CHANGELOG.md" => "CHANGELOG.md",
+        "LICENSE" => "LICENSE",
+        "NOTICE" => "NOTICE",
+        "SECURITY.md" => "SECURITY.md",
+        "CONTRIBUTING.md" => "CONTRIBUTING.md",
+        "SPEC-000-GUNTHER_r8.md" => "SPEC-000-GUNTHER_r8.md"
+      },
+      links: %{
+        "GitHub" => @source_url,
+        "Changelog" => "#{@source_url}/blob/main/CHANGELOG.md"
+      },
+      maintainers: ["Lorenzo Sánchez"]
+    ]
+  end
+
+  defp docs do
+    [
+      main: "readme",
+      extras: [
+        "README.md",
+        "CHANGELOG.md",
+        "SECURITY.md",
+        "CONTRIBUTING.md",
+        "SPEC-000-GUNTHER_r8.md",
+        "LICENSE",
+        "NOTICE"
+      ],
+      groups_for_modules: [
+        Núcleo: [Gunther, Gunther.Application, Gunther.Supervisor],
+        Configuración: [
+          Gunther.Config,
+          Gunther.Config.Loader,
+          Gunther.Config.Validator,
+          Gunther.Config.Server
+        ],
+        Errores: [Gunther.Error],
+        "Catálogo y registro": [
+          Gunther.Catalog,
+          Gunther.Catalog.Server,
+          Gunther.Registry
+        ],
+        Enrutado: [
+          Gunther.Router,
+          Gunther.Decision,
+          Gunther.Rule,
+          Gunther.Rule.Evaluator
+        ],
+        Inferencia: [
+          Gunther.Response,
+          Gunther.Provider,
+          Gunther.Provider.Mock
+        ],
+        Caché: [Gunther.Cache],
+        Cancelación: [Gunther.Cancel],
+        Telemetría: [Gunther.Telemetry.Bridge],
+        Contexto: [Gunther.Context]
+      ],
+      source_ref: "v#{@version}"
+    ]
+  end
+
+  defp deps do
+    [
+      # Ecosistema Lorenzo-SF (SPEC §0.3)
+      # G-17: la insignia del README de arrea dice 3.0.0; lo publicado es 4.0.0.
+      # Pero trebejo (publicado y en su `main`) exige `arrea ~> 3.1`, asi que 4.0.0
+      # es irresoluble con el ecosistema publicado. Rango A: `~> 3.0` del SPEC, que
+      # `~> 3.1` cumple. El ledger es propio (D-48), luego `Arrea.Resource` no hace falta.
+      {:arrea, "~> 3.1"},
+      {:apero, "~> 4.0"},
+      {:trebejo, "~> 2.0"},
+
+      # Obligatorias del núcleo
+      {:jason, "~> 1.4"},
+      {:finch, "~> 0.24"},
+      {:telemetry, "~> 1.4"},
+      # Validador de JSON Schema (SPEC §0.3, decisión de F0)
+      {:jsx, "~> 3.1"},
+      # Parser TOML: `Apero.Conf` lo carga si está disponible (G-07)
+      {:toml, "~> 0.7"},
+
+      # Opcionales: se cargan con `Code.ensure_loaded?/1` (SPEC §0.4)
+      {:plug, "~> 1.20", optional: true},
+      {:bandit, "~> 1.14", optional: true},
+      {:exqlite, "~> 0.43", optional: true},
+      {:postgrex, "~> 0.22", optional: true},
+      {:opentelemetry, "~> 1.0", optional: true},
+
+      # Solo pruebas
+      {:stream_data, "~> 1.4", only: [:test, :dev]},
+      {:benchee, "~> 1.5", only: [:dev, :test], runtime: false},
+
+      # Solo desarrollo: los gates L2 de las cuatro capas de verificacion
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:ex_doc, "~> 0.38", only: [:dev, :test], runtime: false}
+    ]
+  end
+
+  defp dialyzer do
+    [
+      plt_file: {:no_warn, "priv/plts/gunther"},
+      plt_core_path: "priv/plts/core",
+      flags: [:unknown]
+    ]
+  end
+
+  defp aliases do
+    [
+      # L1: formato y compilación sin warnings.
+      "check.format": ["format --check-formatted"],
+      "check.compile": ["compile --force --warnings-as-errors"],
+      # L2: estáticos.
+      "check.static": ["credo --format=oneline", "dialyzer"],
+      # L4: las cuatro capas de verificación de las convenciones de Candil/Gunther.
+      "check.all": [
+        "format --check-formatted",
+        "compile --force --warnings-as-errors",
+        "credo --format=oneline",
+        "dialyzer",
+        "test"
+      ],
+      "hex.build": ["hex.build"]
+    ]
+  end
+end

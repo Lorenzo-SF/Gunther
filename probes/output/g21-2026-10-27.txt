@@ -1,0 +1,63 @@
+== version de apero fijada
+"apero": {:hex, :apero, "4.1.0", "4ebec8664d330b23659427b5e77f5a0f9be6a84ee91234b38adacbe893b6bd3a", [:mix], [{:file_system, "~> 1.0", [hex: :file_system, repo: "hexpm", optional: false]}, {:finch, "~> 0.23", [hex: :finch, repo: "hexpm", optional: false]}, {:jason, "~> 1.4", [hex: :jason, repo: "hexpm", optional: false]}, {:toml, "~> 0.7", [hex: :toml, repo: "hexpm", optional: true]}, {:yaml_elixir, "~> 2.9", [hex: :yaml_elixir, repo: "hexpm", optional: true]}], "hexpm", "31a32bf225efdc6240d327c6e996c44fc0cf44e525fa9d845e47017ae6469c55"},
+
+== modulos que publica la aplicacion apero
+
+apero 4.1.0
+Elixir.Apero
+Elixir.Apero.Application
+Elixir.Apero.Atomic.File
+Elixir.Apero.Backoff
+Elixir.Apero.Cache
+Elixir.Apero.Cache.Adapter
+Elixir.Apero.Cache.AdapterMonitor
+Elixir.Apero.Cache.Crypto
+Elixir.Apero.Cache.ETS
+Elixir.Apero.Cache.Supervisor
+Elixir.Apero.Clock
+Elixir.Apero.Conf
+Elixir.Apero.Conf.Atom
+Elixir.Apero.Conf.Loader
+Elixir.Apero.Conf.Validator
+Elixir.Apero.Crypto
+Elixir.Apero.Crypto.Cipher
+Elixir.Apero.Crypto.Hash
+Elixir.Apero.Crypto.Key
+Elixir.Apero.Crypto.Random
+Elixir.Apero.Env
+Elixir.Apero.Env.Loader
+Elixir.Apero.Env.Serializer
+Elixir.Apero.Env.Store
+Elixir.Apero.File
+Elixir.Apero.File.IO
+Elixir.Apero.File.Path
+Elixir.Apero.File.Tree
+Elixir.Apero.File.Watcher
+Elixir.Apero.Http
+Elixir.Apero.Http.Adapter
+Elixir.Apero.Http.Adapter.Finch
+Elixir.Apero.Http.Error
+Elixir.Apero.Http.Finch
+Elixir.Apero.Http.Method
+Elixir.Apero.Http.Method.Delete
+Elixir.Apero.Http.Method.Get
+Elixir.Apero.Http.Method.Patch
+Elixir.Apero.Http.Method.Post
+Elixir.Apero.Http.Method.Put
+Elixir.Apero.Http.Method.Query
+Elixir.Apero.Http.Request
+Elixir.Apero.Http.Response
+Elixir.Apero.Jsonl
+Elixir.Apero.Network
+Elixir.Apero.OS
+Elixir.Apero.Packages
+Elixir.Apero.Proc
+Elixir.Apero.RateLimit
+Elixir.Apero.RateLimit.Bucket
+Elixir.Apero.Retry
+
+== ¿existe Apero.Llm?
+
+Apero.Llm NO EXISTE
+Apero.Llm.Health NO EXISTE
+Apero.Llm.ConfigManager NO EXISTE

@@ -1,0 +1,103 @@
+== mix deps.tree
+gunther
+├── apero ~> 4.0 (Hex package)
+│   ├── file_system ~> 1.0 (Hex package)
+│   ├── finch ~> 0.23 (Hex package)
+│   ├── jason ~> 1.4 (Hex package)
+│   └── toml ~> 0.7 (Hex package)
+├── arrea ~> 3.1 (Hex package)
+│   ├── alaja ~> 3.2 (Hex package)
+│   │   ├── jason ~> 1.4 (Hex package)
+│   │   └── pote ~> 3.0 (Hex package)
+│   │       └── jason ~> 1.4 (Hex package)
+│   ├── apero ~> 4.0 (Hex package)
+│   ├── jason ~> 1.4 (Hex package)
+│   ├── telemetry ~> 1.3 (Hex package)
+│   ├── telemetry_metrics ~> 1.1 (Hex package)
+│   │   └── telemetry ~> 0.4 or ~> 1.0 (Hex package)
+│   └── telemetry_poller ~> 1.3 (Hex package)
+│       └── telemetry ~> 1.0 (Hex package)
+├── bandit ~> 1.14 (Hex package)
+│   ├── hpax ~> 1.1 (Hex package)
+│   ├── plug ~> 1.18 (Hex package)
+│   ├── telemetry ~> 0.4 or ~> 1.0 (Hex package)
+│   ├── thousand_island ~> 1.6 (Hex package)
+│   │   └── telemetry ~> 0.4 or ~> 1.0 (Hex package)
+│   └── websock ~> 0.5 (Hex package)
+├── benchee ~> 1.5 (Hex package)
+│   ├── deep_merge ~> 1.0 (Hex package)
+│   └── statistex ~> 1.1 (Hex package)
+├── credo ~> 1.7 (Hex package)
+│   ├── bunt ~> 0.2.1 or ~> 1.0 (Hex package)
+│   ├── file_system ~> 0.2 or ~> 1.0 (Hex package)
+│   └── jason ~> 1.0 (Hex package)
+├── dialyxir ~> 1.4 (Hex package)
+│   └── erlex >= 0.2.8 (Hex package)
+├── ex_doc ~> 0.38 (Hex package)
+│   ├── earmark_parser ~> 1.4.46 (Hex package)
+│   ├── makeup_elixir ~> 0.14 or ~> 1.0 (Hex package)
+│   │   ├── makeup ~> 1.0 (Hex package)
+│   │   │   └── nimble_parsec ~> 1.4 (Hex package)
+│   │   └── nimble_parsec ~> 1.2.3 or ~> 1.3 (Hex package)
+│   └── makeup_erlang ~> 0.1 or ~> 1.0 (Hex package)
+│       └── makeup ~> 1.0 (Hex package)
+├── exqlite ~> 0.43 (Hex package)
+│   ├── cc_precompiler ~> 0.1 (Hex package)
+│   │   └── elixir_make ~> 0.7 (Hex package)
+│   ├── db_connection ~> 2.1 (Hex package)
+│   │   └── telemetry ~> 0.4 or ~> 1.0 (Hex package)
+│   └── elixir_make ~> 0.8 (Hex package)
+├── finch ~> 0.24 (Hex package)
+│   ├── mime ~> 1.0 or ~> 2.0 (Hex package)
+│   ├── mint ~> 1.8 (Hex package)
+│   │   └── hpax ~> 1.1 (Hex package)
+│   ├── nimble_options ~> 0.4 or ~> 1.0 (Hex package)
+│   ├── nimble_pool ~> 1.1 (Hex package)
+│   └── telemetry ~> 0.4 or ~> 1.0 (Hex package)
+├── jason ~> 1.4 (Hex package)
+│   └── decimal ~> 1.0 or ~> 2.0 or ~> 3.0 (Hex package)
+├── jsx ~> 3.1 (Hex package)
+├── opentelemetry ~> 1.0 (Hex package)
+│   └── opentelemetry_api ~> 1.5.0 (Hex package)
+├── plug ~> 1.20 (Hex package)
+│   ├── mime ~> 1.0 or ~> 2.0 (Hex package)
+│   ├── plug_crypto ~> 1.1.1 or ~> 1.2 or ~> 2.0 (Hex package)
+│   └── telemetry ~> 0.4.3 or ~> 1.0 (Hex package)
+├── postgrex ~> 0.22 (Hex package)
+│   ├── db_connection ~> 2.9 (Hex package)
+│   ├── decimal ~> 1.5 or ~> 2.0 or ~> 3.0 (Hex package)
+│   └── jason ~> 1.0 (Hex package)
+├── stream_data ~> 1.4 (Hex package)
+├── telemetry ~> 1.4 (Hex package)
+├── toml ~> 0.7 (Hex package)
+└── trebejo ~> 2.0 (Hex package)
+    ├── apero ~> 4.0 (Hex package)
+    └── arrea ~> 3.1 (Hex package)
+
+== mix deps.get --check-locked
+Resolving Hex dependencies...
+Resolution completed in 0.171s
+All dependencies have been fetched
+
+== mix hex.outdated (conflictos entre hermanas)
+Dependency     Only      Current  Latest  Status               
+apero                    4.1.0    4.1.0   Up-to-date           
+arrea                    3.1.0    4.0.0   Update not possible  
+bandit                   1.14.0   1.14.0  Up-to-date           
+benchee        dev,test  1.5.1    1.5.1   Up-to-date           
+credo          dev,test  1.7.19   1.7.19  Up-to-date           
+dialyxir       dev,test  1.4.8    1.4.8   Up-to-date           
+ex_doc         dev,test  0.40.4   0.40.4  Up-to-date           
+exqlite                  0.43.0   0.43.0  Up-to-date           
+finch                    0.24.0   0.24.0  Up-to-date           
+jason                    1.4.5    1.4.5   Up-to-date           
+jsx                      3.1.0    3.1.0   Up-to-date           
+opentelemetry            1.7.0    1.7.0   Up-to-date           
+plug                     1.20.3   1.20.3  Up-to-date           
+postgrex                 0.22.4   0.22.4  Up-to-date           
+stream_data    test,dev  1.4.0    1.4.0   Up-to-date           
+telemetry                1.4.2    1.4.2   Up-to-date           
+toml                     0.7.0    0.7.0   Up-to-date           
+trebejo                  2.1.0    2.1.0   Up-to-date           
+
+Run `mix hex.outdated APP` to see requirements for a specific dependency.

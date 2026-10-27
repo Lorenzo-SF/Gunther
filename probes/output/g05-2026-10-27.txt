@@ -1,0 +1,19 @@
+== version de apero fijada
+"apero": {:hex, :apero, "4.1.0", "4ebec8664d330b23659427b5e77f5a0f9be6a84ee91234b38adacbe893b6bd3a", [:mix], [{:file_system, "~> 1.0", [hex: :file_system, repo: "hexpm", optional: false]}, {:finch, "~> 0.23", [hex: :finch, repo: "hexpm", optional: false]}, {:jason, "~> 1.4", [hex: :jason, repo: "hexpm", optional: false]}, {:toml, "~> 0.7", [hex: :toml, repo: "hexpm", optional: true]}, {:yaml_elixir, "~> 2.9", [hex: :yaml_elixir, repo: "hexpm", optional: true]}], "hexpm", "31a32bf225efdc6240d327c6e996c44fc0cf44e525fa9d845e47017ae6469c55"},
+
+== API de Apero.Retry
+
+Apero.Retry exporta: [handle_message: 1, schedule_next: 7, with: 1, with: 2]
+
+== ¿hay alguna opcion de retry_after o similar?
+
+warning: variable "arity" is unused (if the variable is not meant to be used, prefix it with an underscore)
+└─ nofile:9
+
+warning: variable "text" is unused (if the variable is not meant to be used, prefix it with an underscore)
+└─ nofile:9
+
+funciones: handle_message, schedule_next, with, with
+funciones documentadas: []
+menciona retry_after: false
+menciona Retry-After: false

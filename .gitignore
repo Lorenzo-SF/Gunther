@@ -1,0 +1,25 @@
+# Dependencias y artefactos de compilacion
+/_build/
+/deps/
+/cover/
+/doc/
+/.fetch
+erl_crash.dump
+credo-debug-log.html
+*.ez
+*.beam
+/config/*.secret.exs
+.elixir_ls/
+
+# El PLT de dialyzer se regenera: guarda rutas absolutas del entorno donde se
+# construyo, y en otro host no sirve (ver el topic del sandbox).
+/priv/plts/
+
+# Ficheros del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Editores
+.idea/
+.vscode/
+*.swp

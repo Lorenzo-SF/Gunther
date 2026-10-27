@@ -4,6 +4,29 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado
 
 ## [Sin publicar]
 
+### F0 y F1 — 2026-10-27
+
+Cierre de F0 (puertas medidas) y primer nucleo de F1.
+
+**Añadido**
+
+- Nucleo de la libreria: `Gunther.Error`, `Gunther.Response`, `Gunther.Decision`, `Gunther.Config` (con carga, validacion y servidor), `Gunther.Cache` (LRU exacto con dos ETS), `Gunther.Command` (unica puerta de ejecucion, con lista de permitidos y `Spawner`), `Gunther.Resilience`, `Gunther.Catalog`, `Gunther.Placement`, `Gunther.Provider`, `Gunther.Embedder`, `Gunther.Chunker`, `Gunther.Retriever`, `Gunther.Reranker`, `Gunther.QueryRewriter`, `Gunther.Classifier`, `Gunther.Selector`, `Gunther.Store`, `Gunther.Guardrail`, `Gunther.Tokenizer`, `Gunther.Detector`, `Gunther.SessionStore`, `Gunther.Memory`, `Gunther.Resource.Ledger`, `Gunther.Telemetry.Bridge` y `Gunther.DecisionView`.
+- Configuracion: `Gunther.Config.Validator` valida el esquema completo (secciones del SPEC §14) y distingue la clave desconocida como aviso (D-26) de la seccion de seguridad, donde es `config_error`.
+- Puerta de ejecucion: `Gunther.Command` es la unica forma de lanzar un proceso en Gunther. `scripts/check_boundaries.sh` lo verifica y CI lo ejecuta.
+- Probes de F0: `probes/` con un script reproducible por puerta y las salidas integrias en `probes/output/`.
+- `docs/13-registro-de-fases.md`: las 11 puertas medidas (G-01 a G-07, G-16, G-17, G-21, G-23) con procedimiento, salida, resultado y rama aplicada.
+- `.credo.exs`, `config/config.exs` y el trabajo de CI por capas (L1 a L4).
+
+**Fijado**
+
+- `{:arrea, "~> 3.1"}`: es la unica version resoluble junto a `trebejo` publicado, y cumple el `~> 3.0` del SPEC. La insignia del README de `arrea` dice 3.0.0 y lo publicado es 4.0.0 (puerta G-17, rama B).
+- `Apero.Retry` no se usa: no admite el `retry_after` que dicta el servicio. El retry de §2.5 vive en `Gunther.Resilience` (puerta G-05, rama B).
+- `Trebejo.SafeCommand` no se usa: carga la configuracion del shell y no distingue el caso destructivo del de solo lectura. `Gunther.Command` fuerza `/bin/sh` y exige lista de permitidos (puerta G-06, rama B).
+
+**Nota**
+
+- `Apero.Llm` no existe en `apero` 4.1.0: la puerta G-21 se cierra sin rama por ausencia de solapamiento, no por auditoria propia.
+
 ### SPEC-000-GUNTHER r8 — 2026-10-26
 
 Cierre de DP0 y apertura de F0. Cambios acotados respecto a r7 (M-01 a M-11 y CE-34).

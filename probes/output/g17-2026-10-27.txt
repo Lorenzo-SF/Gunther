@@ -1,0 +1,17 @@
+== versiones publicadas de arrea en Hex
+"releases":[{"version":"4.0.0"
+{"version":"3.1.0"
+{"version":"3.0.0"
+{"version":"2.2.0"
+{"version":"2.1.0"
+{"version":"2.0.0"
+{"version":"1.0.0"
+
+== version fijada en mix.lock
+"arrea": {:hex, :arrea, "3.1.0", "fda304a519ee5c2a6ad6cbc20eccef716309b61a45d478b0d41e20d11a924e20", [:mix], [{:alaja, "~> 3.2", [hex: :alaja, repo: "hexpm", optional: false]}, {:apero, "~> 4.0", [hex: :apero, repo: "hexpm", optional: true]}, {:batamanta, "~> 3.1", [hex: :batamanta, repo: "hexpm", optional: true]}, {:jason, "~> 1.4", [hex: :jason, repo: "hexpm", optional: false]}, {:telemetry, "~> 1.3", [hex: :telemetry, repo: "hexpm", optional: false]}, {:telemetry_metrics, "~> 1.1", [hex: :telemetry_metrics, repo: "hexpm", optional: false]}, {:telemetry_poller, "~> 1.3", [hex: :telemetry_poller, repo: "hexpm", optional: false]}], "hexpm", "657871ab2e617286f246b96c8efc47be66d9c62ff4b6e9f704f40966b2529849"},
+
+== insignia declarada en el README de arrea
+3:[![Hex Version](https://img.shields.io/hexpm/v/arrea.svg)](https://hex.pm/packages/arrea)
+4:[![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3.svg)](https://hexdocs.pm/arrea)
+5:[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.md)
+6:[![Version](https://img.shields.io/badge/version-3.0.0-blue.svg)](https://github.com/Lorenzo-SF/arrea)

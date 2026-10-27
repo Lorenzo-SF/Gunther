@@ -60,7 +60,267 @@ Se rellena al cerrar cada fase y cada puerta (formato en `04-f0-puertas.md`). Lo
 
 ## Resumen de puertas
 
-A fecha 2026-10-26 no hay ninguna puerta registrada. Todas las puertas G-01 a G-31 se ejecutarán en F0 según la política de `CIERRE-DP0.md` §3. La matriz de referencia está en `15-matriz-de-puertas.md`.
+| Puerta | Resultado     | Rama | Bloquea F1 |
+| ------ | ------------- | ---- | ---------- |
+| G-01   | PASA          | A    | Sí         |
+| G-02   | PASA          | A    | No (F5)    |
+| G-03   | PASA          | A    | No (F5)    |
+| G-04   | PASA          | A    | No (F5)    |
+| G-05   | FALLA         | B    | Sí         |
+| G-16   | PASA          | A    | Sí         |
+| G-17   | FALLA         | B    | Sí         |
+| G-06   | FALLA         | B    | No         |
+| G-07   | PASA          | A    | Sí         |
+| G-21   | PASA          | A    | Sí         |
+| G-23   | PASA          | A    | Sí         |
+
+Las puertas que bloquean F1 (G-01, G-05, G-07, G-16, G-17, G-21, G-23) están
+todas `PASA` o `FALLA` con rama B aplicada. **F1 puede abrirse.**
+
+Las puertas G-08 a G-15, G-18 a G-20, G-22, G-24 a G-27 y G-29 a G-31 se
+ejecutan en la fase que las consume (F2, F3, F6, F7, F11, F12, F15, F20, F21)
+y se registran aqui al cerrarse. G-28 depende de F0-02 (el ledger propio ya
+esta escrito: `lib/gunther/core/resource/ledger.ex`).
+
+### G-01 — Dependencias sin ciclos
+
+- Fecha:            2026-10-27
+- Entorno:          Linux 5.x x86_64; Elixir 1.19.1 / OTP 28.0; arrea 3.1.0,
+  apero 4.1.0, trebejo 2.1.0
+- Procedimiento:    `probes/g01_deps.sh` (`mix deps.tree`, `mix deps.get
+  --check-locked`, `mix hex.outdated`)
+- Salida:           `probes/output/g01-2026-10-27.txt`
+- Resultado:        PASA
+- Rama aplicada:    A
+- Cambios en SPEC:  ninguno
+
+El arbol resuelve sin ciclos. `mix hex.outdated` informa `arrea 3.1.0 →
+Update not possible`: no es un conflicto del arbol sino la restriccion de
+`trebejo` (vease G-17).
+
+### G-02 — Umbrales por breaker en Arrea.CircuitBreaker
+
+- Fecha:            2026-10-27
+- Entorno:          el de G-01; arrea 3.1.0
+- Procedimiento:    `probes/g02_g04_resiliencia.sh`; dos breakers con umbrales
+  distintos, ambos forzados a fallar
+- Salida:           `probes/output/g02_g04-2026-10-27.txt`
+- Resultado:        PASA
+- Rama aplicada:    A
+- Cambios en SPEC:  ninguno
+
+`Arrea.CircuitBreaker.start_link/1` acepta `name:`, `threshold:` y `timeout:`
+por breaker. Cada instancia abre con su propio umbral. El codigo de
+`Arrea.CircuitBreaker` es identico entre 3.1.0 y 4.0.0: la rama B de G-17 no
+afecta a esta puerta.
+
+### G-03 — Half-open con una sola sonda
+
+- Fecha:            2026-10-27
+- Entorno:          el de G-01; arrea 3.1.0
+- Procedimiento:    `probes/g02_g04_resiliencia.sh`; breaker abierto, espera
+  del half-open y N llamadas concurrentes
+- Salida:           `probes/output/g02_g04-2026-10-27.txt`
+- Resultado:        PASA
+- Rama aplicada:    A
+- Cambios en SPEC:  ninguno
+
+En half-open pasa una sola sonda; las demas reciben el rechazo del breaker.
+
+### G-04 — Bulkhead y RateLimiter
+
+- Fecha:            2026-10-27
+- Entorno:          el de G-01; arrea 3.1.0
+- Procedimiento:    `probes/g02_g04_resiliencia.sh`; bulkhead al limite
+  (fallo rapido, sin encolar) y rate limiter con peso por llamada
+- Salida:           `probes/output/g02_g04-2026-10-27.txt`
+- Resultado:        PASA
+- Rama aplicada:    A
+- Cambios en SPEC:  ninguno
+
+`Arrea.Bulkhead` expone `available/1`, `run/2` y `run/3`: falla rapido al
+llenarse, sin encolar. `Arrea.RateLimiter` expone `allow?/1` y `allow?/2`:
+la variante de aridad dos admite **peso** por llamada, que es lo que necesita
+el `tpm` con `tokens_entrada + max_tokens_efectivo` (SPEC §2.5).
+
+### G-05 — Apero.Retry
+
+- Fecha:            2026-10-27
+- Entorno:          el de G-01; apero 4.1.0
+- Procedimiento:    `probes/g05_retry.sh` (lectura de la API publicada de
+  `Apero.Retry`: predicado de reintentabilidad y `retry_after`)
+- Salida:           `probes/output/g05-2026-10-27.txt`
+- Resultado:        FALLA
+- Rama aplicada:    B
+- Cambios en SPEC:  §2.5 (capa 1): el retry con `retry_after_ms` se
+  implementa en `Gunther.Resilience`; `Apero.Retry` no se usa. Sin cambios en
+  el texto del SPEC: la rama B ya estaba prevista.
+
+`Apero.Retry.with/2` **si** admite el predicado de reintentabilidad
+(`retry_on: (result -> boolean())`), asi que esa mitad de la puerta pasa. Lo
+que no existe es el **retraso que dicta el servicio**: el unico temporizador
+de `Apero.Retry` es su propio backoff exponencial (`base_delay`, `max_delay`)
+mas el jitter. No hay `retry_after` ni forma de que un 429 o un 503 con
+`Retry-After: 120` espere esos 120 ms.
+
+Sin el, un 429 se reintentaria antes de tiempo y el budget de reintentos se
+gastaria sin esperar al servidor: el servidor seguiria denegando y la
+llamada fallaria por el motivo equivocado (agotamiento del budget en vez de
+limite de tasa).
+
+La capa 1 de §2.5 la implementa `Gunther.Resilience`, que ya necesita su
+propio budget (§2.5) y su tabla de error → accion; ahi el `retry_after_ms`
+del error manda sobre el backoff.
+
+### G-16 — Nombre en Hex
+
+- Fecha:            2026-10-27
+- Entorno:          consulta HTTP a la API de Hex
+- Procedimiento:    `probes/g16_nombre_hex.sh`
+- Salida:           `probes/output/g16-2026-10-27.txt`
+- Resultado:        PASA
+- Rama aplicada:    A
+- Cambios en SPEC:  ninguno
+
+`GET https://hex.pm/api/packages/gunther` responde **404**: el nombre esta
+libre. El paquete se publicara con el nombre `gunther`.
+
+### G-17 — Versiones reales de arrea
+
+- Fecha:            2026-10-27
+- Entorno:          consulta HTTP a la API de Hex y lectura del README de
+  `Lorenzo-SF/arrea`
+- Procedimiento:    `probes/g17_versiones_arrea.sh`
+- Salida:           `probes/output/g17-2026-10-27.txt`
+- Resultado:        FALLA
+- Rama aplicada:    B
+- Cambios en SPEC:  §3.2 y el requisito de `arrea`: la version fijada es
+  `~> 3.1`, no `~> 4.0`. Sin cambios en el texto del SPEC: `~> 3.0` ya
+  excluia 4.0.0 y la rama B solo concreta la version.
+
+El README de `arrea` lleva la insignia `version-3.0.0` y Hex publica
+**4.0.0**: la insignia va dos versiones por detras (3.0.0 publicado, 3.1.0
+publicado, 4.0.0 publicado). La insignia no describe la version real.
+
+**El conflicto que la puerta revela no es de arrea sino de trebejo.**
+`trebejo` 2.1.0 (publicado) y su rama `main` exigen `arrea ~> 3.1`. Con
+`arrea 4.0.0`Gunther no resolveria, porque `trebejo` obliga a bajar a 3.x.
+Se fija `{:arrea, "~> 3.1"}`: cumple el `~> 3.0` del SPEC, es la unica
+version resoluble junto a `trebejo` publicado, y `Arrea.CircuitBreaker` —la
+primitiva que §2.5 necesita— es identica en 3.1.0 y 4.0.0.
+
+El ledger de §11.3 es propio (D-48, ratificado en r8 con Q-14), asi que
+`Arrea.Resource` —la unica novedad de 4.0.0— no se necesita en v1.
+
+La insignia de `arrea` se corrige aparte, en el repositorio de `arrea`: es un
+fallo del README, no de Gunther. Ver `issues/trebejo-arrea-4.md`.
+
+### G-06 — SafeCommand
+
+- Fecha:            2026-10-27
+- Entorno:          el de G-01; trebejo 2.1.0
+- Procedimiento:    `probes/g06_safecommand.sh` (firma `execute/3`, latencia,
+  `rm -rf /`, `nvidia-smi` de solo lectura, y lectura del shell que se usa)
+- Salida:           `probes/output/g06-2026-10-27.txt`
+- Resultado:        FALLA
+- Rama aplicada:    B
+- Cambios en SPEC:  §3.4: el ejecutor es `Gunther.Command`, no
+  `Trebejo.SafeCommand`. Sin cambios en el texto del SPEC: la rama B ya
+  estaba prevista.
+
+Falla en los dos criterios:
+
+1. **Carga la configuracion del shell.** `Trebejo.SafeCommand.execute/3`
+   delega en `Arrea.Command.execute/2`, que invoca `/bin/bash`; el stderr
+   de todas las llamadas lo delata:
+   `/bin/bash: line 1: /workspace/.home/.bashrc: No such file or directory`.
+   La latencia de un comando trivial llega a **67 ms** frente a los 12 ms
+   de una llamada equivalente que no carga el shell.
+2. **No distingue el caso destructivo del de solo lectura.** La
+   validacion de `SafeCommand` comprueba el **nombre** del comando contra
+   un regex de caracteres seguros, no laBucket destructiva. `rm -rf /` pasa
+   la validacion y se ejecuta; lo que lo detiene es el *failsafe* del
+   propio `rm` de GNU ("`rm: it is dangerous to operate recursively on '/'`"),
+   no Gunther ni `trebejo`. Un binario sin failsafe pasaria.
+
+**La rama B es la que ya esta implementada.** `Gunther.Command` fuerza
+`/bin/sh` sin cargar la config del shell y exige una **lista de permitidos**
+antes de ejecutar: `rm -rf /` y `echo hola` devuelven `command_blocked` sin
+llegar a lanzar nada. La lista de permitidos es el criterio de §3.4 (CE-18),
+no una regla de "palabras peligrosas": un binario autorizado no puede hacer
+daño, y uno no autorizado no se ejecuta ni aunque su nombre parezca inocuo.
+
+**Firma que hay que respetar.** `Trebejo.SafeCommand.execute/3` espera el
+**nombre** del comando y los **argumentos por separado**
+(`execute("ls", ["-la"])`). Con `execute("ls -la", [])` el nombre entero no
+pasa el regex y sale `:unsafe_command_name`: un error de uso parece un
+comando peligroso. `Gunther.Command.run/3` tiene su propia firma
+(`run(cmd, args, opts)`) y no sufre esa confusion.
+
+### G-07 — TOML en Apero.Conf
+
+- Fecha:            2026-10-27
+- Entorno:          el de G-01; apero 4.1.0
+- Procedimiento:    carga del ejemplo completo (`examples/gunther.example.toml`)
+  con tablas anidadas y arrays de tablas
+- Salida:           `probes/output/g07-2026-10-27.txt`
+- Resultado:        PASA
+- Rama aplicada:    A
+- Cambios en SPEC:  ninguno
+
+`Apero.Conf` acepta TOML con tablas anidadas y arrays de tablas. La rama B
+(dependencia directa de un parser de TOML) no hace falta; `toml` queda como
+dependencia indirecta de `apero`.
+
+### G-21 — Apero.Llm
+
+- Fecha:            2026-10-27
+- Entorno:          el de G-01; apero 4.1.0
+- Procedimiento:    `probes/g21_apero_llm.sh` (listado de los modulos que
+  publica el paquete instalado)
+- Salida:           `probes/output/g21-2026-10-27.txt`
+- Resultado:        PASA
+- Rama aplicada:    A
+- Cambios en SPEC:  §3.2: la fila de `Apero.Llm` se retira de la tabla de
+  dependencias; no hay modulo equivalente. Sin cambios en el resto del SPEC.
+
+`Apero.Llm` **no existe** en apero 4.1.0. El paquete publica 50 modulos
+(la lista completa esta en `probes/output/g21-2026-10-27.txt`): `Apero`,
+`Apero.Application`, `Apero.Atomic.File`, `Apero.Backoff`, `Apero.Cache` (+
+`Adapter`, `AdapterMonitor`, `Crypto`, `ETS`, `Supervisor`), `Apero.Clock`,
+`Apero.Conf` (+ `Atom`, `Loader`, `Validator`), `Apero.Crypto` (+ `Cipher`,
+`Hash`, `Key`, `Random`), `Apero.Env` (+ `Loader`, `Serializer`, `Store`),
+`Apero.File` (+ `IO`, `Path`, `Tree`, `Watcher`), `Apero.Http` (+ `Adapter`,
+`Adapter.Finch`, `Error`, `Finch`, `Method` y sus verbos, `Query`, `Request`,
+`Response`), `Apero.Jsonl`, `Apero.Network`, `Apero.OS`, `Apero.Packages`,
+`Apero.Proc`, `Apero.RateLimit` (+ `Bucket`) y `Apero.Retry`. No hay
+`Apero.Llm`, ni `Apero.Llm.Health`, ni `Apero.Llm.ConfigManager`.
+
+La puerta pasa con rama A **por la ausencia de solapamiento**: no hay nada
+que solapar. El contrato de proveedor de Gunther (§3.4) es propio, y no se
+descarta ninguna pieza de `apero` que si se usa.
+
+**Nota para la proxima revision del SPEC.** La tabla de §3.2 evaluaba
+`Apero.Llm.Health` y `Apero.Llm.ConfigManager` para la puerta G-21; la
+puerta queda cerrada sinrama porque lo evaluado no existe. Si `apero` publica
+un modulo de LLM en el futuro, G-21 se reabre (regla de `04-f0-puertas.md`:
+una puerta cerrada solo se reabre con evidencia nueva).
+
+### G-23 — Auditoria de dependencias
+
+- Fecha:            2026-10-27
+- Entorno:          el de G-01
+- Procedimiento:    `mix deps.tree` (arbol completo) y revision de la
+  licencia y el mantenimiento de cada dependencia directa
+- Salida:           `probes/output/g01-2026-10-27.txt`
+- Resultado:        PASA
+- Rama aplicada:    A
+- Cambios en SPEC:  ninguno
+
+Arbol completo sin ciclos, sin arboles duplicados y sin dependencias
+obligatorias que no aporten al alcance de v1. Las dependencias opcionales
+(`plug`, `bandit`, `exqlite`, `postgrex`, `opentelemetry`) no se arrastran
+al arbol de quien no las pide.
 
 ## Puertas bloqueantes para F1
 
