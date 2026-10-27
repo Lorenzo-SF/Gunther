@@ -1,0 +1,13 @@
+Regla de no-suposición
+Prohibido «razonable»
+Lint de documento
+no es una estimación
+cost_estimate
+approximate
+tokens_entrada
+H-15
+H-23
+estimaciones o conjeturas
+no contiene estimaciones de tiempo
+La estimación supera el presupuesto
+suposiciones ni estimaciones

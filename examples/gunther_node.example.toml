@@ -1,0 +1,28 @@
+# Ejemplo de configuración de un nodo remoto (SPEC §18.4).
+[node]
+id = "pc2"                              # obligatorio
+bind = "192.168.1.20"                   # obligatorio; sin defecto
+port = 7443
+server_cert_file = "/etc/gunther/pc2.crt"   # TLS se activa si ambos ficheros están presentes y son legibles;
+server_key_file = "/etc/gunther/pc2.key"    # sin ellos el nodo solo acepta loopback
+allowed_clients = ["<sha256 del certificado del controlador>"]
+state_dir = "/var/lib/gunther-node"
+max_engines = 2
+max_leases = 8
+rate_limit_rpm = 600
+lease_grace_ms = 5000
+
+[commands]                              # igual que §3.4
+allow = [ { name = "llama-server", path = "/opt/llama.cpp/bin/llama-server", sha256 = "..." } ]
+
+[[profiles]]
+id = "qwen-27b-q4"
+command = "llama-server"
+backend = "cuda"
+model_path = "/models/qwen.gguf"
+model_sha256 = "..."                    # opcional; verificado antes de cargar
+device = "gpu0"                         # physical_id del nodo
+ctx_size_max = 32768
+parallel_max = 4
+env = { CUDA_VISIBLE_DEVICES = "0" }
+allowed_overrides = ["ctx_size", "parallel", "kv_type_k", "kv_type_v"]
