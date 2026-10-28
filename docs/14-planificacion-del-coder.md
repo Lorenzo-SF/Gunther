@@ -159,6 +159,24 @@ vuelve texto de razonamiento degenerado. La variante que funciona es
 —en `atomic`, `src/llama-quant.cpp` con una rama que manda `ne[2] > 1` a
 NVFP4 y el resto a Q8_0.
 
+### 2.2 bis El modo de razonamiento, decidido
+
+El Nemotron **razona por defecto**: su `chat_template.jinja` hace
+`enable_thinking if enable_thinking is defined else True`. El modo es
+**binario** (si/no), no una escala, y NVIDIA pide `temperature = 0.6` con
+`top_p = 0.95` en modo thinking.
+
+**Para este papel, thinking ON.** El trabajo de un coder (leer un SPEC,
+escribir un test que falla, cazar un bug invertido) *es* razonamiento; sin
+el, el modelo escribe el test, no lo ejecuta y afirma que pasa.
+
+La configuración completa, con el diagnóstico de los cinco fallos que tenía
+(el que de verdad duele es que no se pasaba el `chat_template.jinja`, con lo
+cual el servidor usaba el template de la comunidad y el modelo no razonaba
+bien), esta en
+[`16-nemotron-coder.md`](16-nemotron-coder.md). El prompt que se le pasa al
+modelo, en [`17-prompt-del-coder.md`](17-prompt-del-coder.md).
+
 ### 2.3 El entorno que necesita
 
 El coder trabaja sobre el repositorio, así que necesita el toolchain
@@ -407,12 +425,13 @@ son las que un modelo **no** detecta solo, porque a primera vista parecen lógic
    permitidos con una entrada rara **bloquea el comando**; no tumba el
    proceso.
 
-4. **Un default por clave ausente que no es un valor válido deja el sistema a
-   medias.** El cuantizador de `freshisuis` devolvía "max" para cualquier
-   clave ausente, el helper solo aceptaba cuatro valores, y el EPP se
-   quedaba con el valor del modo anterior. *Regla:* un default se aplica en un
-   **único punto**, y después se **verifica** que se aplicó.
-
+4. **Un valor por defecto silencioso aguas arriba propaga datos falsos.**
+   `Trebejo.OS` devuelve `:unknown` cuando su comando falla (no cuando la
+   arquitectura es desconocida), y `cpu_count` devuelve los cores del BEAM.
+   Los dos son **plausibles**, asi que el consumidor no tiene forma de
+   saber que son mentira. Regla: si un valor puede significar dos cosas
+   ("desconocido" y "no se pudo leer"), el que lo consume tiene que poder
+   distinguirlas, o no debe consumirlo.
 5. **Un doc que afirma lo contrario de lo que hace el código.** Medidos: el
    device de Metal se llama `MTL0`, no `Metal`; `q8_0` ocupa 1,0625 bytes por
    elemento, no 1; `swa_full` es `true` por defecto en llama.cpp master
@@ -420,9 +439,15 @@ son las que un modelo **no** detecta solo, porque a primera vista parecen lógic
    es **exacta**, no una cota. Cuando el código y el doc discrepan, **decidir
    cuál miente antes de tocar el doc**: a veces el doc va bien y el código mal.
 
+6. **Un default por clave ausente que no es un valor válido deja el sistema a
+   medias.** El cuantizador de `freshisuis` devolvía "max" para cualquier
+   clave ausente, el helper solo aceptaba cuatro valores, y el EPP se
+   quedaba con el valor del modo anterior. *Regla:* un default se aplica en un
+   **único punto**, y después se **verifica** que se aplicó.
+
 ### 6.2 En las comprobaciones
 
-6. **Un doctest que no se ejecuta es un doctest muerto.** De 53 módulos del
+7. **Un doctest que no se ejecuta es un doctest muerto.** De 53 módulos del
    núcleo con doctests, solo 4 estaban declarados en un test: **157 doctests
    nunca se ejecutaron**. Y de los que sí se ejecutaban, **42 estaban mal**
    (hashes inventados, aritmética ingenua, factor 1000 de error, firmas que ya
@@ -430,7 +455,7 @@ son las que un modelo **no** detecta solo, porque a primera vista parecen lógic
    declara **todos** los doctests (`test/gunther/doctests_test.exs`) más un
    check automático de que todo módulo con un `iex>` está en esa lista.
 
-7. **Un check con OK falso es peor que no tener check.** En bash, un `return 1`
+8. **Un check con OK falso es peor que no tener check.** En bash, un `return 1`
    dentro de un `eval` **retorna de la función que contiene el `eval`**: la
    comprobación **desaparece del informe** en vez de marcarse FALLA, y el
    script sale con 0. Un `exit 0` dentro del `eval` **mata el script entero**.
@@ -439,7 +464,7 @@ son las que un modelo **no** detecta solo, porque a primera vista parecen lógic
    evaluada. Y un script que imprime su informe al final **tiene que
    comprobar que el informe está completo**.
 
-8. **Contar los avisos con un filtro no es contar los avisos.** El check de
+   **Contar los avisos con un filtro no es contar los avisos.** El check de
    Credo usaba `mix credo --format=oneline` **sin** `--strict`, y el formato
    por defecto de `--strict` no produce líneas `[`: el recuento salía
    siempre 0. Eso dejó la CI en rojo durante quince runs, con 18 avisos de
