@@ -1,97 +1,28 @@
 #!/usr/bin/env bash
-# Comprobacion de las fronteras del nucleo (SPEC §3.6, §0.4).
-#
-# Reglas:
-#   1. `lib/gunther/core/**` no referencia `tools`, `mcp` (servidor), `rag`,
-#      `agent`, `gateway`, `node_agent` ni `coral`.        -> grep
-#   2. Solo `resilience/`, `command/`, `cache.ex`, `platform.ex` y la carga de
-#      config nombran `Arrea.`, `Apero.` o `Trebejo.`.    -> grep
-#   3. Ningun `System.cmd`, `:os.cmd` ni `Port.open` fuera de `command/`.
-#      -> grep
-#   4. Los providers de referencia pueden usar `Apero.Crypto` y `Apero.Env`.
-#
-# Se ignoran los COMENTARIOS: un `@moduledoc` que nombra `Trebejo.SafeCommand`
-# para explicar el diseño no es una dependencia. La regla va deReferences, no
-# de prosa.
-#
-# Salida: 0 si todo esta bien, 1 si hay una violacion.
-
+# Fronteras de código (SPEC §0.4, §3.4, §3.6). Ejecutar desde la raíz del repositorio.
 set -uo pipefail
+fail=0
+CORE=lib/gunther/core
+BOUNDARY='lib/gunther/core/(resilience|command)/|lib/gunther/core/(cache|platform)\.ex|lib/gunther/core/config/'
 
-cd "$(dirname "$0")/.." || exit 1
+# 1. Ejecución de procesos solo en Gunther.Command
+bad=$(grep -rn -E 'System\.cmd|:os\.cmd|Port\.open' lib | grep -v 'lib/gunther/core/command/' || true)
+[ -n "$bad" ] && { echo "Ejecución de procesos fuera de Gunther.Command:"; echo "$bad"; fail=1; }
 
-status=0
-core="lib/gunther/core"
+# 2. Referencias a las hermanas solo en los módulos de frontera (excepción: Apero.Crypto y Apero.Env en providers)
+bad=$(grep -rn -E '\b(Arrea|Apero|Trebejo)\.' lib | grep -v -E "$BOUNDARY" | grep -v -E 'lib/gunther/core/provider/.*(Apero\.Crypto|Apero\.Env)' || true)
+[ -n "$bad" ] && { echo "Referencias a hermanas fuera de los módulos de frontera:"; echo "$bad"; fail=1; }
 
-fail() {
-  echo "FALLO: $1" >&2
-  status=1
-}
+# 3. El núcleo no referencia módulos opcionales
+bad=$(grep -rn -E 'Gunther\.(Gateway|MCP\.Server|Rag|Agent|Hive|Node\.Agent)\b' $CORE || true)
+[ -n "$bad" ] && { echo "El núcleo referencia módulos opcionales:"; echo "$bad"; fail=1; }
 
-# El codigo sin comentarios: se quitan las lineas cuyo primer caracter
-# util sea `#` y el interior de los bloques de doc `"""`.
-strip_comments() {
-  python3 - "$1" <<'PY'
-import re, sys
-src = open(sys.argv[1], encoding="utf-8").read()
-# Bloques de documentacion (""" ... """)
-src = re.sub(r'"""(?:.|\n)*?"""', '""', src)
-# Comentarios de linea
-out = []
-for line in src.split("\n"):
-    stripped = line.lstrip()
-    if stripped.startswith("#"):
-        out.append("")
-    else:
-        out.append(line)
-print("\n".join(out))
-PY
-}
+# 4. Deserialización siempre segura
+bad=$(grep -rn 'binary_to_term' lib | grep -v '\[:safe\]' || true)
+[ -n "$bad" ] && { echo "binary_to_term sin [:safe]:"; echo "$bad"; fail=1; }
 
-# Los modulos de frontera: unica zona donde se puede nombrar a las hermanas.
-es_frontera() {
-  case "$1" in
-    "$core/resilience.ex" | "$core/resilience/"* | "$core/command.ex" | "$core/command/"* | \
-    "$core/cache.ex" | "$core/platform.ex" | \
-    "$core/config/loader.ex" | "$core/config/validator.ex" | "$core/provider/"* | \
-    "$core/embedder.ex" | "$core/tokenizer.ex" | "$core/crypto.ex" | "$core/env.ex" | \
-    "$core/telemetry/bridge.ex" | "$core/resource/ledger.ex")
-      return 0
-      ;;
-    *)
-      return 1
-      ;;
-  esac
-}
+# 5. El ArgsBuilder no emite --rpc
+bad=$(grep -rn -E '"--rpc"|--rpc ' lib || true)
+[ -n "$bad" ] && { echo "Uso de --rpc (excluido por D-66):"; echo "$bad"; fail=1; }
 
-# --- Regla 2: los nombres de las hermanas solo en los modulos de frontera ---
-for file in $(find lib/gunther -name "*.ex" | sort); do
-  if strip_comments "$file" | grep -qE '\b(Arrea|Apero|Trebejo)\.'; then
-    if ! es_frontera "$file"; then
-      fail "$file nombra Arrea/Apero/Trebejo y no es un modulo de frontera (SPEC §3.6)"
-    fi
-  fi
-done
-
-# --- Regla 3: nada de System.cmd, :os.cmd ni Port.open fuera de command/ ---
-for file in $(find lib/gunther -name "*.ex" | sort); do
-  if strip_comments "$file" | grep -qE '(System\.cmd|:os\.cmd|Port\.open)'; then
-    case "$file" in
-      "$core/command.ex" | "$core/command/"*) ;;
-      *) fail "$file ejecuta un proceso y no esta en command/ (SPEC §3.4)" ;;
-    esac
-  fi
-done
-
-# --- Regla 1: el nucleo no referencia los modulos opcionales ---
-for file in $(find "$core" -name "*.ex" | sort); do
-  if strip_comments "$file" | grep -qE '\bGunther\.(Tools|MCP\.Server|Rag|Agent|Gateway|Node\.Agent|Coral)\b'; then
-    fail "$file (nucleo) referencia un modulo opcional (SPEC §0.4)"
-  fi
-done
-
-if [ "$status" -eq 0 ]; then
-  echo "OK: fronteras del nucleo respetadas"
-fi
-
-exit "$status"
+exit $fail

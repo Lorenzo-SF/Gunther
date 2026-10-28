@@ -15,7 +15,7 @@
 | G-28        | Código de Arrea y `Arrea.Resource`    | F22, F2          | Implementación propia                       |
 | G-29 a G-31 | Caché de prompt, continuidad, DSL     | F20, F21         | `affinity` off, `resend`, solo datos y TOML |
 
-**Nota (r8, Q-14) sobre G-28.** `Arrea.Resource` existe y está publicado (D-13). G-28 ya no comprueba su existencia; comprueba si, con su API pública actual, permite implementar `foreign` y `available` de §11.3 sin duplicar medidas ni introducir acoplamiento. Si cumple, el ledger propio (`Gunther.Resource.Ledger`) puede pasar a fachada en una fase posterior. G-28 **no bloquea F1**.
+**Nota (r8, Q-14) sobre G-28.** `Arrea.Resource` existe en `main` según la medición del dueño (D-13); su publicación en Hex está pendiente de G-28 (D-13). G-28 ya no comprueba su existencia; comprueba si, con su API pública actual, permite implementar `foreign` y `available` de §11.3 sin duplicar medidas ni introducir acoplamiento. Si cumple, el ledger propio (`Gunther.Resource.Ledger`) puede pasar a fachada en una fase posterior. G-28 **no bloquea F1**.
 
 **Puertas que bloquean F1.** G-01, G-05, G-07, G-16, G-17, G-21 y G-23 (`CIERRE-DP0.md` §3.4). Deben estar `PASA` o `BLOQUEADA con rama B aplicada` para abrir F1.
 

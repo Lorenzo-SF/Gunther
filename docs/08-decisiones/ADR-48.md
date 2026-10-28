@@ -4,11 +4,11 @@
 - **Fecha**: 2026-10-25
 - **SPEC**: SPEC-000-GUNTHER r8 §3.2, §11.3
 
-- Nota (r8, Q-14): `Arrea.Resource` **existe y está publicado** (D-13: 23 KB, tests, `main` desde 2026-10-10). La vacilación de r5 era de búsqueda, no de existencia. El ledger se queda propio en v1 por la semántica de §11.3 (`foreign` por proceso, `available` con quiescencia, memoria unificada), que `Arrea.Resource` no tiene y envolver cuesta más que mantenerlo. G-28 puede proponer una fachada en una fase posterior, con la condición de §1.4 del SPEC r8.
+- Nota (r8, Q-14): `Arrea.Resource` **existe en `main` según la medición del dueño (D-13); su publicación en Hex está pendiente de G-28** (D-13: 23 KB, tests, `main` desde 2026-10-10). La vacilación de r5 era de búsqueda, no de existencia. El ledger se queda propio en v1 por la semántica de §11.3 (`foreign` por proceso, `available` con quiescencia, memoria unificada), que `Arrea.Resource` no tiene y envolver cuesta más que mantenerlo. G-28 puede proponer una fachada en una fase posterior, con la condición de §1.4 del SPEC r8.
 
 ## Contexto
 
-r4 daba por hecho `Arrea.Resource` como ledger de VRAM. r5 no lo encontró en la documentación pública. En r8 el dueño confirma que existe y está publicado (Q-14), pero el ledger se queda propio en v1 por el desajuste de dominio: `Arrea.Resource` no tiene la semántica de `foreign` por proceso, `available` con quiescencia ni memoria unificada que §11.3 necesita.
+r4 daba por hecho `Arrea.Resource` como ledger de VRAM. r5 no lo encontró en la documentación pública. En r8 el dueño confirma que existe en `main` según la medición del dueño (D-13); su publicación en Hex está pendiente de G-28 (Q-14), pero el ledger se queda propio en v1 por el desajuste de dominio: `Arrea.Resource` no tiene la semántica de `foreign` por proceso, `available` con quiescencia ni memoria unificada que §11.3 necesita.
 
 ## Decisión
 
