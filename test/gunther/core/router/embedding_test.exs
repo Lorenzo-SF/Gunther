@@ -193,7 +193,7 @@ defmodule Gunther.Router.EmbeddingTest do
       # La capa :rule opino con el veto, asi que corta: :embedding y :llm no
       # corren (§6.10).
       assert decision.chosen == :a
-      assert decision.reason == :rule
+      assert decision.reason == :veto
       assert decision.layers_ran == [:rule]
     end
 
