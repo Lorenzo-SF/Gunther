@@ -18,9 +18,10 @@
 | `11-glosario.md`                   | Términos                                                             |
 | `12-roadmap.md`                    | Posterior a 1.0                                                      |
 | `13-registro-de-fases.md`          | Registro vivo de fases y puertas                                     |
+| `14-planificacion-del-coder.md` | Plan de traspaso al modelo *coder*: estado, método, cola, trampas y criterios de revisión |
 | `15-matriz-de-puertas.md`          | Resumen de las puertas F0 y sus ramas                                |
 
-**Nota sobre `docs/14`.** El índice salta de 13 a 15. Es intencional: el hueco queda reservado para futuros documentos que no encajen en las categorías actuales. No se rellena con un archivo vacío.
+**Nota sobre `docs/14`.** El hueco estaba reservado para documentos que no encajen en las categorías anteriores; lo ocupa la planificación del relevo al modelo *coder*, que es exactamente eso.
 
 ## Orden de lectura sugerido
 
@@ -30,3 +31,4 @@
 4. `01-plan-de-desarrollo.md`.
 5. `08-decisiones/README.md`.
 6. `04-f0-puertas.md`.
+7. `../AGENTS.md` — el contrato de trabajo de quien toque el repositorio.

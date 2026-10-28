@@ -33,9 +33,15 @@ para uso en produccion. Lee `CHANGELOG.md` antes de depender de el.
 
 ```bash
 mix deps.get
-mix check.all     # formato, compilacion, credo, dialyzer y pruebas
+mix check.all     # las cuatro capas, en el entorno de test
 ```
 
-Las cuatro capas de verificacion (L1 formato y compilacion, L2 estaticos,
-L3 pruebas, L4 fronteras y documentos) son trabajos separados en CI
-(`.github/workflows/ci.yml`).
+`mix check.all` corre formato, compilacion sin warnings, Credo **estricto**,
+Dialyzer, la suite, las fronteras y el lint de documento. Las mismas cuatro
+capas son trabajos separados en CI (`.github/workflows/ci.yml`), que es donde
+manda.
+
+El contrato de trabajo de quien toque el repositorio —incluido un modelo que
+haga de _coder_— esta en [`AGENTS.md`](AGENTS.md). El plan de traspaso, con
+el estado real, el metodo, la cola de trabajo y los criterios de revision,
+esta en [`docs/14-planificacion-del-coder.md`](docs/14-planificacion-del-coder.md).

@@ -34,7 +34,12 @@ defmodule Gunther.MixProject do
       preferred_envs: %{
         coveralls: :test,
         "coveralls.detail": :test,
-        "coveralls.html": :test
+        "coveralls.html": :test,
+        # `mix test` dentro de un alias corre en el entorno actual: si el
+        # alias se lanza desde `dev`, la suite no puede arrancar (los tests
+        # viven en `:test`). `preferred_envs` hace que Mix **reejecute** el
+        # alias con el entorno que necesita, en vez de avisar.
+        "check.all": :test
       }
     ]
   end
@@ -176,15 +181,21 @@ defmodule Gunther.MixProject do
       # L1: formato y compilación sin warnings.
       "check.format": ["format --check-formatted"],
       "check.compile": ["compile --force --warnings-as-errors"],
-      # L2: estáticos.
-      "check.static": ["credo --format=oneline", "dialyzer"],
-      # L4: las cuatro capas de verificación de las convenciones de Candil/Gunther.
+      # L2: estáticos. El `--strict` va **junto**: sin él, Credo solo mira la
+      # configuración por defecto y el recuento de avisos sale siempre 0.
+      # Un check que no ve nada no es un check.
+      "check.static": ["credo --strict --format=oneline", "dialyzer"],
+      # L3 y L4: las cuatro capas de verificación. L4 son las fronteras y el
+      # lint de documento, que también entran aquí: el README dice que hay
+      # cuatro capas, y un alias que solo hace tres miente.
       "check.all": [
         "format --check-formatted",
         "compile --force --warnings-as-errors",
-        "credo --format=oneline",
+        "credo --strict --format=oneline",
         "dialyzer",
-        "test"
+        "test",
+        "cmd bash scripts/check_boundaries.sh",
+        "cmd bash scripts/doc_lint.sh"
       ],
       "hex.build": ["hex.build"]
     ]
