@@ -146,10 +146,14 @@ comp_suite_estable() {
 # es lo que dejo la CI en rojo durante quince runs. Aqui se cuenta todo.
 comp_credo() {
   local n
-  n=$(mix credo --format=oneline 2>&1 | grep -cE "^\[")
+  # El `--strict` va **junto** con `--format=oneline`: sin el primero se
+  # cuentan solo los avisos de la configuracion por defecto, y sin el
+  # segundo las lineas no empiezan por `[` y el recuento sale 0 siempre
+  # (un check que no puede fallar no es un check).
+  n=$(mix credo --strict --format=oneline 2>&1 | grep -cE "^\[")
   if [ "$n" -ne 0 ]; then
     echo "$n aviso(s) de Credo"
-    mix credo --format=oneline 2>&1 | grep -E "^\[" | head -20
+    mix credo --strict --format=oneline 2>&1 | grep -E "^\[" | head -20
     return 1
   fi
   return 0

@@ -59,6 +59,8 @@ defmodule Gunther.DoctestsTest do
 
   doctest Gunther.Embedder
 
+  doctest Gunther.Engine.Placement
+
   doctest Gunther.Engine.Placer
 
   doctest Gunther.Error
