@@ -54,9 +54,6 @@ defmodule Gunther.Config.Loader do
       {:ok, parsed} when is_map(parsed) ->
         {:ok, parsed}
 
-      {:ok, _other} ->
-        {:error, Error.new(:config_error, "la configuracion debe ser una tabla", details: %{path: path})}
-
       {:error, reason} ->
         {:error,
          Error.new(:config_error, "no se puede interpretar la configuracion: #{path}",
@@ -72,7 +69,6 @@ defmodule Gunther.Config.Loader do
 
     if dotenv == true do
       case Apero.Env.load() do
-        :ok -> :ok
         {:ok, _value} -> :ok
         {:error, reason} -> {:error, Error.new(:config_error, "no se puede cargar .env", cause: reason)}
       end

@@ -107,10 +107,6 @@ defmodule Gunther.Command.AllowList do
       {:ok, %File.Stat{inode: inode, major_device: device}} ->
         {:ok, {inode, device}}
 
-      {:ok, _other} ->
-        {:error,
-         Error.new(:command_blocked, "no se puede obtener el inodo de: #{realpath}", details: %{path: realpath})}
-
       {:error, reason} ->
         {:error,
          Error.new(:command_blocked, "no se puede obtener el inodo de: #{realpath}",
