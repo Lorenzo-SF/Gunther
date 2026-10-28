@@ -5,12 +5,16 @@
 # documentos) se ejecutan como trabajos separados: un fallo en una capa no
 # tapa el de otra.
 #
-# Versiones fijadas: Elixir 1.19.1 sobre OTP 27.3 y 28.0 (las dos que el
-# proyecto soporta; ver `.tool-versions`).
+# Versiones fijadas: una sola combinacion, la del toolchain oficial
+# (Erlang 28.5.0.7 + Elixir 1.19.5-otp-28; ver `.tool-versions`).
 name: ci
 on:
   push: { branches: [main] }
   pull_request:
+  # Relanzar la CI a mano. Necesario cuando un fallo es de la cuenta y no del
+  # codigo (por ejemplo, minutos de Actions agotados): los jobs nacen con
+  # `steps: 0` y sin runner, y eso solo se ve relanzando.
+  workflow_dispatch:
   schedule:
     - cron: "0 6 * * 1"   # semanal: trabajos weekly-*
 
