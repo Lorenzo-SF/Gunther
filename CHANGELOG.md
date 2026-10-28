@@ -4,6 +4,33 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado
 
 ## [Sin publicar]
 
+### Toolchain, cierre de F1 y el `reason` del router — 2026-10-28
+
+**Toolchain**
+
+- Erlang **28.5.0.7** y Elixir **1.19.5-otp-28**, los mismos que `ropero` (instruccion del dueño). `.tool-versions`, la CI y el SPEC (**r9**) quedan fijados en esa combinacion. La matriz de CI con OTP 27 y 28 desaparece: un solo toolchain para todo el ecosistema.
+
+**El `reason` de la decision**
+
+- El `reason` ahora distingue `:veto` y `:force` de `:rule`, como pide la enumeracion de §4.13. Un veto es seguridad y su motivo se ve; un force es el operador y el suyo tambien. `layers_ran` sigue diciendo que capas corrieron: son dos cosas distintas. **Esto cambia un contrato publico.**
+
+**El cierre de una fase, ejecutable**
+
+- `scripts/check_phase.sh F1` y `scripts/check_ac.sh docs/fases/F1.md`: una fase no se da por cerrada porque compile y los tests passen. Los AC de §19 se ejecutan **por test** (un AC sin test es un AC sin cumplir) y nueve comprobaciones de calidad haruscan en verde: la suite con el **resumen visible** (un `mix test` cuyo formateador revienta no imprime resumen y no puede darse por bueno), tres corridas seguidas sin intermitencia, Credo **sin filtrar por prioridad**, Dialyzer, compilacion sin warnings, fronteras, lint de documento, paquete limpio y el SPEC sin cambios respecto a la version aprobada.
+- `docs/fases/F1.md`: la nota de fase con la tabla **AC -> test**.
+
+**Corregido**
+
+- El hash del catalogo cubria el nombre de las reglas y el `id` de los `DecisionSpec`, no su contenido: cambiar el `target`, la `action`, el `when` o las rutas de un spec dejaba el hash igual y la cache seguia sirviendo un ranking invalidado.
+- La puerta G6 (prefijo `[:gunther, :coral]` reservado) no era una reserva: el puente aceptaba ese prefijo. Ahora **se niega a arrancar** con el, y el error es un valor.
+- Un AC de F1 no tenia test: el reensamblado de `:noeol` con mensajes mayores que el bufer de linea (CE-20). Ahora lo tiene.
+- Un consumer sin `default_model` es `config_error` (AC de r7), y ahora tiene test.
+- `Gunther.Context` no tenia test.
+
+**Nota sobre el formatter de ExUnit**
+
+- Un `assert` sobre 100.000 caracteres **revienta el formateador** de ExUnit: el `mix test` termina con codigo 1 pero **sin imprimir el resumen**, y el que lo lee no ve el fallo. El test compara longitud y hash.
+
 ### F1 — las seis capas del router, el provider de mentira y el contrato — 2026-10-28
 
 **Añadido**

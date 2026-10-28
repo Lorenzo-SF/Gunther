@@ -31,7 +31,7 @@
  ├── examples/                  # configs y ejemplos ejecutables
  ├── scripts/                   # doc_lint.sh, check_boundaries.sh
  ├── .github/                   # workflows y plantillas de issues
- ├── SPEC-000-GUNTHER_r8.md
+ ├── SPEC-000-GUNTHER_r9.md
  ├── SPEC-000-GUNTHER_r7.md
  ├── CIERRE-DP0.md
  ├── LICENSE  NOTICE  CONTRIBUTING.md  SECURITY.md  CHANGELOG.md  README.md
@@ -52,6 +52,6 @@ Obligatorias: `arrea`, `apero`, `trebejo`, `jason`, `finch`, `telemetry`, el val
 
 ## Documentos raíz
 
-- `SPEC-000-GUNTHER_r8.md`: especificación vigente.
+- `SPEC-000-GUNTHER_r9.md`: especificación vigente.
 - `SPEC-000-GUNTHER_r7.md`: revisión anterior, se conserva como histórico.
 - `CIERRE-DP0.md`: registro firmado por el dueño del cierre de DP0 (aprobación de D-48 a D-92, cierre de Q-01 a Q-16, política de ejecución de F0). Es el ADR trail del cierre.

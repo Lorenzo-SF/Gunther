@@ -97,7 +97,9 @@ defmodule Gunther.RouterTest do
       {:ok, decision} = Router.route([%{role: :user, content: "hola"}], opts(rules: rules))
 
       assert decision.chosen == :b
-      assert decision.reason == :rule
+      # El motivo distingue el veto de la capa de reglas (§4.13): un veto es
+      # seguridad y su motivo se ve.
+      assert decision.reason == :veto
       assert decision.layers_ran == [:rule]
       assert decision.global_rules_applied == ["v"]
     end
@@ -108,7 +110,9 @@ defmodule Gunther.RouterTest do
       {:ok, decision} = Router.route([%{role: :user, content: "hola"}], opts(rules: rules))
 
       assert decision.chosen == :b
-      assert decision.reason == :rule
+      # El motivo distingue el force: es el operador (§4.13).
+      assert decision.reason == :force
+      assert decision.layers_ran == [:rule]
     end
 
     test "un veto gana a un pin" do

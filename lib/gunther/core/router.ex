@@ -19,6 +19,13 @@ defmodule Gunther.Router do
   `pin` → capas blandas → `fallback`. Un `veto` gana a un `pin`, y un `force`
   tambien.
 
+  El `reason` de la decision dice **por que** se eligio el que se eligio
+  (§4.13): `:veto` cuando un veto decidio el conjunto, `:force` cuando el
+  operador fijo el destino, `:rule` cuando solo hubo un `prefer` que
+  pondero, y `:cache`, `:pin`, `:embedding`, `:llm` o `:fallback` segun la
+  capa que resolvio. El `layers_ran` dice **que capas** corrieron: son dos
+  cosas distintas.
+
   ## Ejemplos
 
       iex> catalog = %{version: 1, models: %{a: %{alias: :a, provider: :p, locality: :cloud, capabilities: [], tags: []}}, providers: %{}, nodes: %{}}
@@ -127,7 +134,7 @@ defmodule Gunther.Router do
       cond do
         # Un `force` fija el destino y gana al pin (§6.2).
         forced? ->
-          resolve(after_rules, :rule, [:rule], opts, filtered, applied_consumer, applied_global)
+          resolve(after_rules, :force, [:rule], opts, filtered, applied_consumer, applied_global)
 
         # El pin es eje A: gana a las capas blandas (§6.2).
         pin != nil ->
@@ -142,7 +149,7 @@ defmodule Gunther.Router do
             filtered,
             applied_consumer,
             applied_global,
-            vetoed? or preferred?
+            rule_reason(vetoed?, preferred?)
           )
       end
     end
@@ -155,7 +162,16 @@ defmodule Gunther.Router do
   # cambia el hash del catalogo, que es parte de la clave.
   #
   # El pin tampoco pasa por aqui: es eje A y ya ha resuelto.
-  defp soft_layers(candidates, messages, text, opts, filtered, applied_consumer, applied_global, rule_opined?) do
+  defp soft_layers(
+         candidates,
+         messages,
+         text,
+         opts,
+         filtered,
+         applied_consumer,
+         applied_global,
+         rule_reason
+       ) do
     case lookup(text, opts) do
       {:ok, ranking} ->
         # El ranking cacheado se revalida: un alias que ya no es elegible se
@@ -164,7 +180,16 @@ defmodule Gunther.Router do
 
         case eligible do
           [] ->
-            compute_layers(candidates, messages, text, opts, filtered, applied_consumer, applied_global, rule_opined?)
+            compute_layers(
+              candidates,
+              messages,
+              text,
+              opts,
+              filtered,
+              applied_consumer,
+              applied_global,
+              rule_reason
+            )
 
           _eligible ->
             ranked = Enum.map(eligible, & &1.alias)
@@ -175,7 +200,16 @@ defmodule Gunther.Router do
         end
 
       :error ->
-        compute_layers(candidates, messages, text, opts, filtered, applied_consumer, applied_global, rule_opined?)
+        compute_layers(
+          candidates,
+          messages,
+          text,
+          opts,
+          filtered,
+          applied_consumer,
+          applied_global,
+          rule_reason
+        )
     end
   end
 
@@ -186,9 +220,27 @@ defmodule Gunther.Router do
   # `router.llm` decide si la capa `:llm` existe (§6.3): `never` la quita,
   # `fallback` (defecto) la deja correr solo si las baratas no resolvieron, y
   # `always` la corre siempre.
-  defp compute_layers(candidates, messages, text, opts, filtered, applied_consumer, applied_global, rule_opined?) do
+  defp compute_layers(
+         candidates,
+         messages,
+         text,
+         opts,
+         filtered,
+         applied_consumer,
+         applied_global,
+         rule_reason
+       ) do
     {result, ranking} =
-      soft_layers_chain(candidates, messages, text, opts, filtered, applied_consumer, applied_global, rule_opined?)
+      soft_layers_chain(
+        candidates,
+        messages,
+        text,
+        opts,
+        filtered,
+        applied_consumer,
+        applied_global,
+        rule_reason
+      )
 
     with {:ok, _decision} <- result do
       store(text, opts, ranking)
@@ -197,11 +249,20 @@ defmodule Gunther.Router do
     result
   end
 
-  defp soft_layers_chain(candidates, messages, text, opts, filtered, applied_consumer, applied_global, rule_opined?) do
+  defp soft_layers_chain(
+         candidates,
+         messages,
+         text,
+         opts,
+         filtered,
+         applied_consumer,
+         applied_global,
+         rule_reason
+       ) do
     {result, ranking, degraded} =
-      if rule_opined? do
+      if rule_reason do
         # La capa :rule opino: corta (§6.10).
-        {resolve(candidates, :rule, [:rule], opts, filtered, applied_consumer, applied_global),
+        {resolve(candidates, rule_reason, [:rule], opts, filtered, applied_consumer, applied_global),
          apply_strategy(rank_pure(candidates, prefer_weights(opts, candidates)), strategy(opts)), []}
       else
         case embedding_layer(candidates, text, opts) do
@@ -346,6 +407,23 @@ defmodule Gunther.Router do
       catalog_hash: catalog_hash,
       text: text
     )
+  end
+
+  # El `reason` de una decision que resuelve la capa de reglas (SPEC §4.13).
+  #
+  # La enumeracion distingue `:veto`, `:force` y `:rule`, asi que el motivo
+  # se distingue tambien: un veto es seguridad y un force es el operador.
+  # Un `prefer` solo pondera, y ahi el motivo es la capa de reglas.
+  #
+  # `nil` significa que la capa de reglas **no opino**: entonces el destino
+  # lo eligen las capas de abajo. Asi el motivo y el "opino" son la misma
+  # cosa, y no hacen falta dos parametros para decirlo.
+  defp rule_reason(vetoed?, preferred?) do
+    cond do
+      vetoed? -> :veto
+      preferred? -> :rule
+      true -> nil
+    end
   end
 
   # El modelo pineado, si sigue siendo elegible. Un veto o un force pueden

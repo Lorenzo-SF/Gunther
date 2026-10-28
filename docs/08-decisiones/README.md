@@ -199,7 +199,7 @@ Cerradas por las decisiones del dueño y sin cambio en el SPEC: I-03, I-06, I-09
 
 ## Cambios para r8 (decisiones D-48 a D-92 y Q-01 a Q-16)
 
-Aplicados en r8. El detalle está en `SPEC-000-GUNTHER_r8.md`, Anexo D.
+Aplicados en r8. El detalle está en `SPEC-000-GUNTHER_r9.md`, Anexo D.
 
 | #     | Sección                                             | Cambio                                                               | Origen      | Estado         |
 | ----- | --------------------------------------------------- | -------------------------------------------------------------------- | ----------- | -------------- |

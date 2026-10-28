@@ -19,7 +19,9 @@ defmodule Gunther.Telemetry.Bridge do
   - `[:gunther, :router, :cache_hit | :cache_miss]`
 
   El prefijo `[:gunther, :coral, ...]` queda **reservado** (G6): lo usa la
-  coral en v1.1 y este módulo no lo emite.
+  coral en v1.1 y este módulo no lo emite. **Ademas, no se puede usar por
+  error**: un puente arrancado con ese prefijo **se niega a arrancar**. Una
+  reserva que se puede ocupar sin querer no es una reserva.
   """
 
   use GenServer
@@ -32,10 +34,18 @@ defmodule Gunther.Telemetry.Bridge do
   @spec start_link(keyword()) :: GenServer.on_start()
   def start_link(opts \\ []) do
     name = Keyword.get(opts, :name, __MODULE__)
+    prefix = Keyword.get(opts, :prefix, [:gunther])
 
-    case GenServer.start_link(__MODULE__, opts, name: name) do
-      {:ok, pid} -> {:ok, pid}
-      {:error, {:already_started, pid}} -> {:ok, pid}
+    # El prefijo reservado se comprueba **antes** de arrancar: arrancar un
+    # proceso que va a morir es un crash, y un crash por una configuracion
+    # prohibida no dice que hacer. El error es un valor (§4.13).
+    if reserved?(prefix) do
+      {:error, {:reserved_prefix, prefix}}
+    else
+      case GenServer.start_link(__MODULE__, opts, name: name) do
+        {:ok, pid} -> {:ok, pid}
+        {:error, {:already_started, pid}} -> {:ok, pid}
+      end
     end
   end
 
@@ -43,6 +53,34 @@ defmodule Gunther.Telemetry.Bridge do
   def init(opts) do
     prefix = Keyword.get(opts, :prefix, [:gunther])
 
+    if reserved?(prefix) do
+      # La reserva de G6 no es una recomendacion: es un limite.
+      {:stop, {:reserved_prefix, prefix}}
+    else
+      attach(prefix)
+    end
+  end
+
+  # El prefijo reservado de la coral (G6).
+  @reserved_prefix [:gunther, :coral]
+
+  @doc """
+  Si un prefijo es el reservado de la coral (G6).
+
+  ## Ejemplos
+
+      iex> Gunther.Telemetry.Bridge.reserved?([:gunther, :coral])
+      true
+
+      iex> Gunther.Telemetry.Bridge.reserved?([:gunther, :cache])
+      false
+  """
+  @spec reserved?(list()) :: boolean()
+  def reserved?(@reserved_prefix), do: true
+  def reserved?(prefix) when is_list(prefix), do: List.starts_with?(prefix, @reserved_prefix)
+  def reserved?(_prefix), do: false
+
+  defp attach(prefix) do
     :telemetry.attach_many(
       "gunther-bridge",
       [

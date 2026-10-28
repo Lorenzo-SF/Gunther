@@ -11,8 +11,8 @@ Se rellena al cerrar cada fase y cada puerta (formato en `04-f0-puertas.md`). Lo
 | **DP2** | pendiente  |                |                                                                                                                    |              |                                                                               |
 | **DP3** | pendiente  |                |                                                                                                                    |              |                                                                               |
 | **DP4** | pendiente  |                |                                                                                                                    |              |                                                                               |
-| **F0**  | pendiente  |                |                                                                                                                    |              |                                                                               |
-| **F1**  | 2026-10-28 | en marcha     | Nucleo, router (capas, precedencia, traza), pipeline de §2.5, capa `:cache`, capa `:embedding` | Sin desviaciones | La capa `:rule` corta cuando opino (§6.10): `:embedding` y `:llm` no corren |
+| **F0**  | 2026-10-27 | **2026-10-28** | 11 puertas medidas con scripts reproducibles (`probes/`) y la salida integra en `probes/output/` | Sin desviaciones | G-05, G-06 y G-17 fallan y tienen rama B aplicada |
+| **F1**  | 2026-10-28 | **2026-10-28** | Nucleo, router (las seis capas), pipeline de §2.5. 10 AC de F1 ejecutados (`scripts/check_ac.sh docs/fases/F1.md`) y 9 comprobaciones de cierre (`scripts/check_phase.sh F1`) | Sin desviaciones del SPEC; un AC diferido a F3 con razon escrita | La capa `:rule` corta cuando opino (§6.10): `:embedding` y `:llm` no corren |
 | **F2**  | pendiente  |                |                                                                                                                    |              |                                                                               |
 | **F3**  | pendiente  |                |                                                                                                                    |              |                                                                               |
 | **F4**  | pendiente  |                |                                                                                                                    |              |                                                                               |
@@ -333,7 +333,7 @@ G-02, G-03, G-04, G-05 (`CIERRE-DP0.md` §3.5, punto 9). No bloquean F1.
 ## F1 — Nucleo, router y resiliencia
 
 - Inicio: 2026-10-28
-- Fin: en marcha
+- Fin: **2026-10-28** (cerrada)
 - AC ejecutados: `mix test` (207 tests, 17 doctests, 2 properties, 0 fallos),
   `mix credo` (0 avisos), `mix dialyzer` (0 errores),
   `scripts/check_boundaries.sh` (OK), `scripts/doc_lint.sh` (OK)
@@ -381,9 +381,47 @@ motivos, y ninguno habia saltado en local:
 4. **La cache de decisiones reventaba si el proceso no estaba arrancado.**
    Ahora un `miss` es un `miss`, no un fallo.
 
+### El cierre de la fase, y como se comprueba
+
+Una fase **no** se da por cerrada porque el codigo compile y los tests
+pasen. Se da por cerrada cuando las comprobaciones del cierre estan en
+verde, y esas comprobaciones son ejecutables:
+
+- **`scripts/check_ac.sh docs/fases/F1.md`**: ejecuta los AC de §19 (y los
+  añadidos de r7 y r8) **por test**. Un AC esta cerrado cuando hay un test
+  con ese nombre y el fichero entero pasa. Si un AC no tiene test, la fase
+  no se cierra. Resultado: **10 cumplidos, 0 fallidos, 1 diferido**.
+- **`scripts/check_phase.sh F1`**: las nueve comprobaciones de calidad. Lo
+  que el script no comprueba, no se puede afirmar. Resultado: **9 en verde**.
+
+Las dos cosas que ese proceso destaparon:
+
+1. **Un AC sin test no estaba cubierto.** El reensamblado de `:noeol` con
+   mensajes mayores que el bufer de linea (CE-20) no tenia el test que el AC
+   pide; lo tiene ahora. Y el consumer sin `default_model` tampoco.
+2. **La puerta G6 (prefijo `[:gunther, :coral]` reservado) no era una
+   reserva**: el puente aceptaba ese prefijo y lo emitia. Ahora **se niega a
+   arrancar** con el, y el error es un valor.
+
 ### Lo que queda de F1
 
+- El AC "chat/2 sin contexto se comporta igual que antes" esta **diferido a
+  F3**, con la razon escrita en `docs/fases/F1.md`: `chat/2` no existe hasta
+  F3. Diferir un AC no es cumplirlo.
 - El estado de verificacion de los `DecisionSpec` connectedo al informe de
-  evaluacion (§6.11) y el `Doctor.calibrate_router/2`, que es trabajo de F4.
-  La mecanica de la capa `:llm` esta: lo que falta es el informe que la
-  activa.
+  evaluacion (§6.11) y el `Doctor.calibrate_router/2` son trabajo de F4. La
+  mecanica de la capa `:llm` esta: lo que falta es el informe que la activa.
+
+### El AC y el codigo: dos cosas que conviene tener escritas
+
+- **El `reason` de un `force` o de un `veto`.** La enumeracion de §4.13
+  incluye `:veto` y `:force`, y el codigo devolvia `:rule` para ambos: una
+  desviacion de la letra del SPEC. **Esta cerrada**: el `reason` dice **por
+  que** se eligio el destino (`:veto` seguridad, `:force` operador, `:rule`
+  un `prefer` que solo pondera) y `layers_ran` sigue diciendo **que capas**
+  corrieron. Son dos cosas distintas.
+- **El ranking que se cachea.** El §6.5 dice "el ranking puro"; el codigo
+  guarda el ranking **final** (con la estrategia ya aplicada) para que un hit
+  se sirva tal cual. Cuando `least_used` y `round_robin` dependan de un
+  estado que cambia, el ranking a guardar tiene que ser el previo a la
+  estrategia.

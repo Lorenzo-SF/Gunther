@@ -2,7 +2,7 @@
 
 | Documento                          | Para qué                                                             |
 | ---------------------------------- | -------------------------------------------------------------------- |
-| `../SPEC-000-GUNTHER_r8.md`        | Especificación completa vigente: qué se construye                    |
+| `../SPEC-000-GUNTHER_r9.md`        | Especificación completa vigente: qué se construye                    |
 | `../SPEC-000-GUNTHER_r7.md`        | Revisión anterior; se conserva como histórico                        |
 | `../CIERRE-DP0.md`                 | Registro de las decisiones del dueño que cierran DP0 y abren F0      |
 | `01-plan-de-desarrollo.md`         | Fases de diseño y desarrollo, paquetes de trabajo y dependencias     |
@@ -26,7 +26,7 @@
 
 1. `../README.md`.
 2. `../CIERRE-DP0.md`.
-3. `../SPEC-000-GUNTHER_r8.md` §1 y §21.
+3. `../SPEC-000-GUNTHER_r9.md` §1 y §21.
 4. `01-plan-de-desarrollo.md`.
 5. `08-decisiones/README.md`.
 6. `04-f0-puertas.md`.

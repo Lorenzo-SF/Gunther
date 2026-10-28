@@ -6,7 +6,7 @@ Esta carpeta contiene **una nota de fase por cada fase de desarrollo** (`docs/fa
 
 Cada `Fnn.md` debe tener, como mínimo:
 
-1.  **Secciones del SPEC que cubre** (con enlaces a `SPEC-000-GUNTHER_r8.md` §N).
+1.  **Secciones del SPEC que cubre** (con enlaces a `SPEC-000-GUNTHER_r9.md` §N).
 2.  **Decisiones locales** que se toman al implementar (con justificación). Si alguna contradice el SPEC, se detiene el trabajo y se abre `rN+1` (regla 3 de `docs/01` §1).
 3.  **Paquetes de trabajo** (`Fnn-01`, `Fnn-02`, ...) con objetivo, dependencias y criterios de aceptación.
 4.  **Pruebas** que se van a ejecutar, separando unitarias, propiedades, contrato, integración y caos.

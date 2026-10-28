@@ -4,13 +4,14 @@ defmodule Gunther.CatalogHashTest do
   alias Gunther.Catalog
   alias Gunther.Config
 
-  defp config(rules, consumers \\ []) do
+  defp config(rules, consumers \\ [], decision_models \\ []) do
     {:ok, config} =
       Config.load(%{
         "gunther" => %{"instance_id" => "main"},
         "models" => [%{"alias" => "a", "provider" => "llamacpp", "model_id" => "x"}],
         "rules" => rules,
-        "consumers" => Map.new(consumers, fn {id, c} -> {id, c} end)
+        "consumers" => Map.new(consumers, fn {id, c} -> {id, c} end),
+        "decision_models" => decision_models
       })
 
     config
@@ -27,6 +28,23 @@ defmodule Gunther.CatalogHashTest do
       },
       Map.new(attrs)
     )
+  end
+
+  # Un DecisionSpec con su estado de verificacion. El estado **no** viene de
+  # la config: lo pone el informe de evaluacion (F4). Por eso aqui se
+  # construye la struct a mano.
+  defp hash_with_decision(spec, verification \\ :unverified) do
+    decision = %{
+      id: String.to_atom(spec["id"]),
+      kind: String.to_atom(spec["kind"]),
+      model: String.to_atom(spec["model"]),
+      routes: spec["routes"] || %{},
+      verification: verification
+    }
+
+    config = %{config([]) | decision_models: [decision]}
+
+    Catalog.hash(catalog(config), config)
   end
 
   defp hash(rules, consumers \\ %{}) do
@@ -69,6 +87,33 @@ defmodule Gunther.CatalogHashTest do
 
     test "una regla de consumer nueva da otro hash" do
       refute hash([]) == hash([], %{"c1" => %{"default_model" => "a", "rules" => [rule("cv")]}})
+    end
+
+    test "un DecisionSpec con otras rutas da otro hash" do
+      a =
+        hash_with_decision(%{
+          "id" => "r",
+          "kind" => "preference_router",
+          "model" => "a",
+          "routes" => %{"code" => %{"models" => ["a"]}}
+        })
+
+      b =
+        hash_with_decision(%{
+          "id" => "r",
+          "kind" => "preference_router",
+          "model" => "a",
+          "routes" => %{"code" => %{"models" => ["b"]}}
+        })
+
+      refute a == b
+    end
+
+    test "un DecisionSpec con otro estado de verificacion da otro hash" do
+      a = hash_with_decision(%{"id" => "r", "kind" => "preference_router", "model" => "a"})
+      b = hash_with_decision(%{"id" => "r", "kind" => "preference_router", "model" => "a"}, :active)
+
+      refute a == b
     end
 
     test "sin configuracion el hash solo cubre el catalogo" do

@@ -101,7 +101,7 @@ defmodule Gunther.RouterLlmTest do
       {:ok, decision} = Router.route(message(), opts(llm_mode: :fallback, rules: rules))
 
       assert decision.chosen == :a
-      assert decision.reason == :rule
+      assert decision.reason == :veto
     end
 
     test "un pin gana a la capa :llm" do

@@ -107,6 +107,29 @@ defmodule Gunther.CommandTest do
     test "un final sin eol se devuelve como estaba" do
       assert Spawner.reassemble([{:noeol, "suelto"}]) == ["suelto"]
     end
+
+    test "un mensaje mayor que el buffer de linea se reensambla en uno solo" do
+      # El búfer de linea de un `Port` con `{:line, 65536}` son 65536 bytes.
+      # Un mensaje mas largo llega en varios `{:noeol, fragmento}` y tiene que
+      # salir como **un** mensaje (AC de F1, CE-20).
+      big = String.duplicate("x", 100_000)
+
+      # El troceado es a proposito: un patron binario de tamano fijo deja
+      # fuera el resto, y ese resto es justo lo que hay que reensamblar.
+      messages =
+        big
+        |> :erlang.binary_to_list()
+        |> Enum.chunk_every(4096)
+        |> Enum.map(fn chunk -> {:noeol, :erlang.list_to_binary(chunk)} end)
+
+      assert [result] = Spawner.reassemble(messages)
+
+      # Se comparan la longitud y el hash, no las cadenas: un assert sobre
+      # 100.000 caracteres revienta el formateador de ExUnit y se pierde el
+      # resumen de la suite, que es justo lo que hace falta ver.
+      assert byte_size(result) == byte_size(big)
+      assert :crypto.hash(:sha256, result) == :crypto.hash(:sha256, big)
+    end
   end
 
   describe "stderr" do

@@ -22,16 +22,12 @@ jobs:
   # L1: formato y compilacion sin warnings.
   l1-format-compile:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        otp: ["27", "28"]
-        elixir: ["1.19.1"]
     steps:
       - uses: actions/checkout@v4
       - uses: erlef/setup-beam@v1
         with:
-          otp-version: "${{ matrix.otp }}"
-          elixir-version: "${{ matrix.elixir }}"
+          otp-version: "28.5.0.7"
+          elixir-version: "1.19.5-otp-28"
       - run: mix deps.get --check-locked
       - run: mix format --check-formatted
       - run: mix compile --force --warnings-as-errors
@@ -42,7 +38,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: erlef/setup-beam@v1
-        with: { otp-version: "28", elixir-version: "1.19.1" }
+        with: { otp-version: "28.5.0.7", elixir-version: "1.19.5-otp-28" }
       - run: mix deps.get --check-locked
       - run: mix credo --format=oneline
       - run: mix dialyzer
@@ -50,16 +46,12 @@ jobs:
   # L3: pruebas.
   l3-test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        otp: ["27", "28"]
-        elixir: ["1.19.1"]
     steps:
       - uses: actions/checkout@v4
       - uses: erlef/setup-beam@v1
         with:
-          otp-version: "${{ matrix.otp }}"
-          elixir-version: "${{ matrix.elixir }}"
+          otp-version: "28.5.0.7"
+          elixir-version: "1.19.5-otp-28"
       - run: mix deps.get --check-locked
       - run: mix test
 
@@ -69,7 +61,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: erlef/setup-beam@v1
-        with: { otp-version: "28", elixir-version: "1.19.1" }
+        with: { otp-version: "28.5.0.7", elixir-version: "1.19.5-otp-28" }
       - run: mix deps.get --check-locked
       - run: mix xref graph --format stats
       - run: ./scripts/check_boundaries.sh
@@ -81,7 +73,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: erlef/setup-beam@v1
-        with: { otp-version: "28", elixir-version: "1.19.1" }
+        with: { otp-version: "28.5.0.7", elixir-version: "1.19.5-otp-28" }
       - run: mix deps.get --check-locked
       - run: mix hex.audit
 
@@ -91,7 +83,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: erlef/setup-beam@v1
-        with: { otp-version: "28", elixir-version: "1.19.1" }
+        with: { otp-version: "28.5.0.7", elixir-version: "1.19.5-otp-28" }
       - run: mix deps.get --check-locked
       - run: mix hex.build
       - run: mix hex.build --unpack -o build
@@ -114,7 +106,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: erlef/setup-beam@v1
-        with: { otp-version: "28", elixir-version: "1.19.1" }
+        with: { otp-version: "28.5.0.7", elixir-version: "1.19.5-otp-28" }
       - run: mix deps.get
       - run: mix deps.update arrea apero trebejo
       # `deps.update` deja el lock modificado: si las hermanas sacaron algo
