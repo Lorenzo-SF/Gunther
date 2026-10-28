@@ -151,7 +151,7 @@ Aceptadas en DP0.
 | J-04 | D-09, D-11 | «El defecto no está puesto» frente a `policy = "wait"`                                              | §14.1                 | incoherencia |
 | J-05 | D-09       | `[consumer.X]` con `model_default` obligatorio frente a ausencia de la sección                      | §14.1, §4.2           | incoherencia |
 | J-06 | D-12       | `Telemetry.Quality` frente a eventos de §13.1 sin esa métrica                                       | §13.1                 | incoherencia |
-| J-07 | D-13       | `Arrea.Resource` existe en `main` según la medición del dueño (D-13); su publicación en Hex está pendiente de G-28 | §3.2, D-48            | incoherencia |
+| J-07 | D-13       | `Arrea.Resource` existe en `main` (D-13), pendiente de Hex (G-28), frente a «no verificado»         | §3.2, D-48            | incoherencia |
 | J-08 | D-15       | `[consumer.X] priority` y envejecimiento frente a «prioridad como peso» sin definir                 | §5.8, §14.1           | incoherencia |
 | J-09 | D-18       | CLI con su fase frente a «sin CLI»                                                                  | §1.1, D-31            | incoherencia |
 | J-10 | D-20       | Agente con circuito abierto no reinicia frente a regla retirada                                     | §10.1                 | incoherencia |
