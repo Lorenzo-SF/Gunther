@@ -277,5 +277,5 @@ La coral se entrega **después de 1.0** (Q-09, Q-13). Los ganchos G1 a G9 entran
 - **`[[consumers.<id>.rules]]`** (M-01, Q-15): F1-01 añade validación; F4-03 es un WP propio; F4-04 incluye el hash de reglas de consumer en la clave de caché.
 - **N-15 = 50 ms p99** (M-02, Q-09): se verifica en F18.
 - **Coral sustituye a Hive y Voice** (M-03, Q-13): F18-F22 usan `Gunther.Coral` como nombre.
-- **`Arrea.Resource` existe y está publicado** (M-04, Q-14): G-28 sigue verificando si cumple §11.3, pero ya no comprueba su existencia; no bloquea F1.
+- **`Arrea.Resource` existe en `main` según la medición del dueño (D-13); su publicación en Hex está pendiente de G-28** (M-04, Q-14): G-28 sigue verificando si cumple §11.3, pero ya no comprueba su existencia; no bloquea F1.
 - **Taxonomía cerrada de skills** (M-06, Q-16): F1-01 valida el catálogo contra la lista cerrada.

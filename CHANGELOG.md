@@ -4,6 +4,17 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado
 
 ## [Sin publicar]
 
+### Correcciones editoriales y de licencia — 2026-10-28
+
+Correcciones solicitadas por el dueño, sin cambio de comportamiento (SPEC Anexo D.5, E-01 a E-06):
+
+- **E-01** — §6.8.1: el bloque TOML de ejemplo pasa a ser **válido** (antes llevaba los marcadores `<id>`) y la precedencia se aclara: **los vetos se acumulan** (el de consumer y el global eliminan candidatos y no chocan entre sí) y ambos prevalecen sobre cualquier `force`. Una restricción de privacidad se expresa como `veto`, nunca como `force`, porque un `force` de consumer prevalece sobre uno global.
+- **E-02** — `Arrea.Resource`: la afirmación «existe y está publicado» era falsa. **Existe en `main` según la medición del dueño (D-13); su publicación en Hex está pendiente de G-28.** Corregido en §1.4, §3.2, §11.3, §21, Anexos B y D, y en los ADR 48 y 91.
+- **E-03** — *Superada*: decía que F0 no estaba iniciado. F0 y F1 están cerrados desde el 2026-10-28 y r9 lo refleja.
+- **E-04** — §19 y Anexo C: el recuento de puertas de F0 era 31 y son **32** (G-01 a G-31, con G-06b).
+- **E-05** — Regla final: «El juego se considera terminado por evidencia» → «Una fase se considera terminada por evidencia (sus AC ejecutados)», alineado con D-10.
+- **E-06** — `LICENSE` con el **texto oficial e íntegro** de Apache-2.0 (verificado byte a byte contra `apache.org`), `NOTICE` con año y titular, `.gitignore` y fuera los `.DS_Store` que estaban versionados.
+
 ### Toolchain, cierre de F1 y el `reason` del router — 2026-10-28
 
 **Toolchain**
@@ -105,7 +116,7 @@ Cierre de DP0 y apertura de F0. Cambios acotados respecto a r7 (M-01 a M-11 y CE
 
 - D-48 a D-92: estado `propuesta` → `aceptada` (DP0 cerrado).
 - D-30, D-46, D-56: sustituidas por D-74 en lo relativo a «colmena / mesa camilla / voz» (M-03).
-- D-48 y D-91: nota de Q-14 (ledger propio en v1; `Arrea.Resource` existe y está publicado).
+- D-48 y D-91: nota de Q-14 (ledger propio en v1; `Arrea.Resource` existe y está publicado). **[Corregido en r9, E-02: solo existe en `main`; la publicación en Hex está pendiente de G-28.]**
 - §1.3: tabla de conceptos renombrada (coral, miembro, plan, pizarra).
 - §1.4 y §1.5: notas a D-30, D-46, D-48, D-56, D-91.
 - §3.2: fila `Arrea.Resource` actualizada con Q-14.
