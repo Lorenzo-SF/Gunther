@@ -468,8 +468,10 @@ son las que un modelo **no** detecta solo, porque a primera vista parecen lógic
     `git diff --cached --name-only`: no arrastrar trabajo de otros carriles.
 
 12. **La fecha de los commits** va entre las 20:00 y las 02:00
-    Europe/Berlin, en día laborable. Exportar `GIT_AUTHOR_DATE` **y**
-    `GIT_COMMITTER_DATE` antes de cada commit.
+    Europe/Berlin, en día laborable, y **del día que es**: antes de fecharlos,
+    `date`. Una fecha de mañana rompe el historial y miente sobre la hora.
+    Exportar `GIT_AUTHOR_DATE` **y** `GIT_COMMITTER_DATE` antes de cada
+    commit.
 
 13. **El merge es squash**, que es el estilo del ecosistema. Y tras cada
     merge, `main` se verifica y las ramas que quedan se actualizan.

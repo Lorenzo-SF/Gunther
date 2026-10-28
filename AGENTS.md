@@ -33,7 +33,7 @@ comportamiento está **fijado** en `SPEC-000-GUNTHER_r9.md` (SPEC vigente).
 3. Implementación mínima para que pase.
 4. mix format && mix test
 5. Refactor con los checks en verde.
-6. Los seis checks (§"Las comprobaciones").
+6. Los nueve comandos de "Las comprobaciones" (o `mix check.all`).
 7. Nota de fase + CHANGELOG + registro de fases.
 8. Commit: feat(F3-0X): qué y por qué.
 ```
@@ -42,6 +42,10 @@ comportamiento está **fijado** en `SPEC-000-GUNTHER_r9.md` (SPEC vigente).
 está cumplido: se declara como tal y **no cierra la fase**.
 
 ## Las comprobaciones
+
+`mix check.all` corre las cuatro capas de una vez (formato, compilación, Credo
+estricto, Dialyzer, suite, fronteras y lint de documento). Para verlas una a
+una:
 
 ```bash
 mix format --check-formatted
@@ -112,4 +116,5 @@ git diff --cached --name-only
 
 Staging explícito: **no** arrastrar trabajo de otros carriles. Los commits
 llevan fecha entre las 20:00 y las 02:00 (Europe/Berlin) en día laborable, y
-el merge es **squash**.
+**del día que es**: antes de fecharlos, mira el reloj (`date`). Una fecha de
+mañana rompe el historial. Y el merge es **squash**.
