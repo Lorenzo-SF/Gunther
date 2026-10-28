@@ -4,8 +4,11 @@
 # Reglas:
 #   1. `lib/gunther/core/**` no referencia `tools`, `mcp` (servidor), `rag`,
 #      `agent`, `gateway`, `node_agent` ni `coral`.        -> grep
-#   2. Solo `resilience/`, `command/`, `cache.ex`, `platform.ex` y la carga de
-#      config nombran `Arrea.`, `Apero.` o `Trebejo.`.    -> grep
+#   2. Solo `resilience/`, `command/`, `cache.ex`, `platform.ex`, la carga de
+#      config y `detector/cpu.ex` nombran `Arrea.`, `Apero.` o `Trebejo.`.
+#      -> grep
+#      (`detector/cpu.ex` usa `Trebejo.OS` porque lo dice el SPEC: la CPU se
+#      sintetiza con la memoria del sistema.)
 #   3. Ningun `System.cmd`, `:os.cmd` ni `Port.open` fuera de `command/`.
 #      -> grep
 #   4. Los providers de referencia pueden usar `Apero.Crypto` y `Apero.Env`.
@@ -55,7 +58,8 @@ es_frontera() {
     "$core/cache.ex" | "$core/platform.ex" | \
     "$core/config/loader.ex" | "$core/config/validator.ex" | "$core/provider/"* | \
     "$core/embedder.ex" | "$core/tokenizer.ex" | "$core/crypto.ex" | "$core/env.ex" | \
-    "$core/telemetry/bridge.ex" | "$core/resource/ledger.ex")
+    "$core/telemetry/bridge.ex" | "$core/resource/ledger.ex" | \
+    "$core/detector/cpu.ex")
       return 0
       ;;
     *)

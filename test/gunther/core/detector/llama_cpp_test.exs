@@ -96,6 +96,25 @@ defmodule Gunther.Detector.LlamaCppTest do
       assert {:error, :not_a_device_list} = LlamaCpp.parse("load_tensors: offloading 0 repeating layers\n")
     end
 
+    test "el RPC se descarta (Gunther no pasa nunca --rpc)" do
+      # §11.7, D-66: un `RPC0` en la salida no es un device de Gunther.
+      raw =
+        output([
+          "  RPC0: 127.0.0.1:50052 (1024 MiB, 1024 MiB free)",
+          "  CUDA0: NVIDIA GeForce RTX 5080 (15109 MiB, 12000 MiB free)"
+        ])
+
+      assert {:ok, [device]} = LlamaCpp.parse(raw)
+      assert device.physical_id == "CUDA0"
+    end
+
+    test "una linea sin indice no casa con la expresion del SPEC" do
+      # La expresion es `([A-Za-z]+)([0-9]+)`: el indice es obligatorio.
+      raw = output(["  CUDA: NVIDIA GeForce RTX 5080 (15109 MiB, 12000 MiB free)"])
+
+      assert {:ok, []} = LlamaCpp.parse(raw)
+    end
+
     test "una linea con formato raro se ignora, no revienta" do
       raw =
         output([
@@ -115,7 +134,8 @@ defmodule Gunther.Detector.LlamaCppTest do
 
       assert {:ok, [device]} = LlamaCpp.parse(raw)
       assert device.usable == false
-      assert device.reason == :free_gt_total
+      # El motivo es el del SPEC (§11.7): :inconsistent_report.
+      assert device.reason == :inconsistent_report
     end
 
     test "memoria no declarada deja el device no usable" do

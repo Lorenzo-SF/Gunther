@@ -69,22 +69,28 @@ defmodule Gunther.Detector.LlamaCpp do
     "CPU" => :cpu
   }
 
-  @device_regex ~r/^\s{2}(?<name>[^:]+):\s+(?<description>.*?)\s+\((?<total>\d+) MiB, (?<free>\d+) MiB free\)$/
+  # La expresion de analisis del SPEC (§11.7):
+  #   ^\s*([A-Za-z]+)([0-9]+): (.+) \((\d+) MiB, (\d+) MiB free\)\s*$
+  @device_regex ~r/^\s*(?<backend>[A-Za-z]+)(?<index>\d+):\s+(?<description>.+)\s+\((?<total>\d+) MiB,\s+(?<free>\d+) MiB free\)\s*$/
 
   @type device :: %{
-          physical_id: String.t(),
-          name: String.t(),
-          description: String.t(),
-          backend: atom(),
-          backend_name: String.t(),
-          capacity_mib: non_neg_integer(),
-          free_mib: non_neg_integer(),
-          usable: boolean(),
-          reason: atom() | nil
+          required(:physical_id) => String.t(),
+          required(:name) => String.t(),
+          required(:description) => String.t(),
+          required(:backend) => atom(),
+          required(:backend_name) => String.t(),
+          required(:kind) => :discrete | :unified,
+          required(:capacity_mib) => non_neg_integer(),
+          required(:free_mib) => non_neg_integer(),
+          required(:usable) => boolean(),
+          required(:reason) => atom() | nil
         }
 
   @doc """
   Parsea la salida de `--list-devices`.
+
+  Los devices de **RPC** se descartan con un aviso: Gunther no pasa nunca
+  `--rpc` (D-66), asi que un `RPC0` en la salida no es un device usable.
 
   ## Ejemplos
 
@@ -96,7 +102,17 @@ defmodule Gunther.Detector.LlamaCpp do
     lines = String.split(output, "\n", trim: true)
 
     if List.first(lines) == @header do
-      {:ok, lines |> Enum.drop(1) |> Enum.map(&parse_line/1) |> Enum.reject(&is_nil/1)}
+      parsed =
+        lines
+        |> Enum.drop(1)
+        |> Enum.map(&parse_line/1)
+        |> Enum.reject(&is_nil/1)
+
+      # El RPC se descarta **con aviso**: el aviso es de los que se
+      # descartan, no de todos.
+      Enum.each(Enum.filter(parsed, &rpc?/1), &warn_rpc/1)
+
+      {:ok, Enum.reject(parsed, &rpc?/1)}
     else
       {:error, :not_a_device_list}
     end
@@ -119,10 +135,11 @@ defmodule Gunther.Detector.LlamaCpp do
         nil
 
       captures ->
-        name = captures["name"]
+        backend_name = captures["backend"]
+        name = backend_name <> captures["index"]
         total = String.to_integer(captures["total"])
         free = String.to_integer(captures["free"])
-        {backend_name, backend} = backend_of(name)
+        backend = Map.get(@backends, backend_name)
 
         cond do
           is_nil(backend) ->
@@ -132,6 +149,7 @@ defmodule Gunther.Detector.LlamaCpp do
               description: captures["description"],
               backend: :unknown,
               backend_name: backend_name,
+              kind: :discrete,
               capacity_mib: total,
               free_mib: free,
               usable: false,
@@ -145,10 +163,11 @@ defmodule Gunther.Detector.LlamaCpp do
               description: captures["description"],
               backend: backend,
               backend_name: backend_name,
+              kind: kind_of(backend),
               capacity_mib: total,
               free_mib: free,
               usable: false,
-              reason: :free_gt_total
+              reason: :inconsistent_report
             }
 
           total == 0 ->
@@ -160,6 +179,7 @@ defmodule Gunther.Detector.LlamaCpp do
               description: captures["description"],
               backend: backend,
               backend_name: backend_name,
+              kind: kind_of(backend),
               capacity_mib: total,
               free_mib: free,
               usable: false,
@@ -173,6 +193,7 @@ defmodule Gunther.Detector.LlamaCpp do
               description: captures["description"],
               backend: backend,
               backend_name: backend_name,
+              kind: kind_of(backend),
               capacity_mib: total,
               free_mib: free,
               usable: true,
@@ -180,6 +201,23 @@ defmodule Gunther.Detector.LlamaCpp do
             }
         end
     end
+  end
+
+  # El Metal es **siempre** de memoria unificada (§11.8). En los demas
+  # backends, que un device sea unificado (una iGPU de Vulkan, un UMA de
+  # CUDA) lo declara la configuracion: la salida del motor **no lo dice**.
+  defp kind_of(:metal), do: :unified
+  defp kind_of(_backend), do: :discrete
+
+  # El RPC no es un device de Gunther: se descarta con un aviso (§11.7, D-66).
+  defp rpc?(device), do: device.backend == :rpc
+
+  defp warn_rpc(device) do
+    require Logger
+
+    Logger.warning("Gunther: se descarta el device #{device.name} (backend RPC): Gunther no pasa nunca --rpc (D-66)")
+
+    device
   end
 
   @doc """

@@ -53,7 +53,13 @@ defmodule Gunther.DoctestsTest do
 
   doctest Gunther.Detector
 
+  doctest Gunther.Doctor
+
+  doctest Gunther.Detector.Cpu
+
   doctest Gunther.Detector.Engine
+
+  doctest Gunther.Detector.Fabricante
 
   doctest Gunther.Detector.LlamaCpp
 
