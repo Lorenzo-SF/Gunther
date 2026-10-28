@@ -21,8 +21,9 @@ defmodule Gunther.Config.Loader do
 
   ## Ejemplos
 
-      iex> Gunther.Config.Loader.load("/no/existe.toml")
-      {:error, %Gunther.Error{code: :config_error, message: "no se puede leer el fichero de configuracion: /no/existe.toml", retryable?: false, retry_after_ms: nil, details: %{path: "/no/existe.toml"}, cause: nil}}
+      iex> {:error, error} = Gunther.Config.Loader.load("/no/existe.toml")
+      iex> {error.code, error.details.path}
+      {:config_error, "/no/existe.toml"}
   """
   @spec load(Path.t()) :: {:ok, map()} | {:error, Error.t()}
   def load(path) do

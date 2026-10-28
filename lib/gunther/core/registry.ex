@@ -90,7 +90,7 @@ defmodule Gunther.Registry do
 
   ## Ejemplos
 
-      iex> Gunther.Registry.list(:selector)
+      iex> Gunther.Registry.list(:provider)
       []
   """
   @spec list(atom()) :: [module()]
@@ -103,7 +103,7 @@ defmodule Gunther.Registry do
 
   ## Ejemplos
 
-      iex> Gunther.Registry.resolve(:selector, Gunther.Selector.RoundRobin)
+      iex> Gunther.Registry.resolve(:provider, Gunther.Provider.Mock)
       :error
   """
   @spec resolve(atom(), module()) :: {:ok, keyword()} | :error

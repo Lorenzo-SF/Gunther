@@ -8,8 +8,9 @@ defmodule Gunther.Decision do
 
   ## Ejemplos
 
-      iex> Gunther.Decision.new(%{chosen: :a, provider: :p, ranked: [:a, :b]})
-      %Gunther.Decision{chosen: :a, provider: :p, node: nil, ranked: [:a, :b], reason: :fallback, layers_ran: [], candidates_per_layer: [], filtered: [], degraded: [], decision_model: nil, affinity: nil, consumer_rules_applied: [], global_rules_applied: [], trace_id: nil, duration_ms: 0, timestamp: nil}
+      iex> decision = Gunther.Decision.new(%{chosen: :a, provider: :p, ranked: [:a, :b]})
+      iex> {decision.chosen, decision.provider, decision.ranked, decision.reason}
+      {:a, :p, [:a, :b], :fallback}
   """
 
   @type reason :: :cache | :pin | :rule | :embedding | :llm | :fallback | :veto | :force
@@ -72,7 +73,7 @@ defmodule Gunther.Decision do
 
   ## Ejemplos
 
-      iex> Gunther.Decision.new(%{chosen: :a, provider: :p, ranked: [:a, :b]}).candidates
+      iex> Gunther.Decision.candidates(Gunther.Decision.new(%{chosen: :a, provider: :p, ranked: [:a, :b]}))
       [:a, :b]
   """
   @spec candidates(t()) :: [atom()]
@@ -83,7 +84,8 @@ defmodule Gunther.Decision do
 
   ## Ejemplos
 
-      iex> Gunther.Decision.new(%{chosen: :a, provider: :p, degraded: [:failover]}).degraded?()
+      iex> decision = Gunther.Decision.new(%{chosen: :a, provider: :p, degraded: [:failover]})
+      iex> Gunther.Decision.degraded?(decision)
       true
   """
   @spec degraded?(t()) :: boolean()

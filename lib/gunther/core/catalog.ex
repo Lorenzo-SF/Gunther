@@ -35,7 +35,7 @@ defmodule Gunther.Catalog do
 
   ## Ejemplos
 
-      iex> {:ok, config} = Gunther.Config.load(%{gunther: %{instance_id: "main"}})
+      iex> {:ok, config} = Gunther.Config.load(%{"gunther" => %{"instance_id" => "main"}})
       iex> catalog = Gunther.Catalog.build(config)
       iex> catalog.version
       1
@@ -86,7 +86,7 @@ defmodule Gunther.Catalog do
 
   ## Ejemplos
 
-      iex> {:ok, config} = Gunther.Config.load(%{gunther: %{instance_id: "main"}})
+      iex> {:ok, config} = Gunther.Config.load(%{"gunther" => %{"instance_id" => "main"}})
       iex> catalog = Gunther.Catalog.build(config)
       iex> Gunther.Catalog.get(catalog, :no_existe)
       :error

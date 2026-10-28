@@ -11,9 +11,14 @@
 #   scripts/check_ac.sh docs/fases/F1.md
 #
 # Formato de la tabla (columnas): | # | AC | test/fichero.exs · "nombre del test" | fase |
-# La cuarta columna dice en que fase se verifica: si no es la fase que se
-# esta cerrando, el AC esta **diferido** y se avisa, pero no se cuenta como
-# cumplido ni como fallido: se cuenta como diferido, y el script lo dice.
+# La cuarta columna dice en que fase se verifica:
+#
+#   * `Fnn`    — se verifica en esa fase: se ejecuta el test.
+#   * `BLOQUEADA` — no se puede verificar aqui (falta el hardware). **No es un
+#     AC cumplido**: se cuenta como pendiente y la fase no se cierra.
+#   * `PENDIENTE` — el trabajo no esta hecho. Tampoco es un AC cumplido.
+#   * otra fase — el AC esta **diferido**: se avisa, pero no se cuenta como
+#     cumplido ni como fallido.
 
 set -uo pipefail
 
@@ -36,12 +41,15 @@ FASE="${2:-$(basename "$FICHERO" .md)}"
 CUMPLIDOS=0
 FALLIDOS=0
 DIFERIDOS=0
+PENDIENTES=0
 declare -a DETALLE=()
 
 # Las filas de la tabla de AC. Se leen por el separador `|`.
 while IFS= read -r linea; do
+  # Solo las filas de AC: el identificador es `F<numero>-<numero>`.
+  # Con un prefijo mas laxo ("F"), se colaban filas de otras tablas.
   case "$linea" in
-    "| F"*) ;;
+    "| F"[0-9]"-"*) ;;
     *) continue ;;
   esac
 
@@ -61,6 +69,13 @@ while IFS= read -r linea; do
   fase_ac="$(echo "$_fase" | sed 's/^ *//; s/ *$//')"
 
   if [ -z "$nombre" ] || [ -z "$ruta" ]; then
+    continue
+  fi
+
+  if [ "$fase_ac" = "BLOQUEADA" ] || [ "$fase_ac" = "PENDIENTE" ]; then
+    # Un AC bloqueado o sin trabajo hecho **no es un AC cumplido**.
+    PENDIENTES=$((PENDIENTES + 1))
+    DETALLE+=("PENDIENTE $_id ($fase_ac): $nombre")
     continue
   fi
 
@@ -110,11 +125,17 @@ for linea in "${DETALLE[@]}"; do
   echo "  $linea"
 done
 echo
-echo "  cumplidos: $CUMPLIDOS · fallidos: $FALLIDOS · diferidos a otra fase: $DIFERIDOS"
+echo "  cumplidos: $CUMPLIDOS · fallidos: $FALLIDOS · pendientes: $PENDIENTES · diferidos a otra fase: $DIFERIDOS"
 echo
 
 if [ $FALLIDOS -ne 0 ]; then
   echo "== La fase $FASE NO cumple sus AC: $FALLIDOS sin cumplir =="
+  exit 1
+fi
+
+if [ $PENDIENTES -ne 0 ]; then
+  echo "== La fase $FASE NO cumple sus AC: $PENDIENTES sin cumplir =="
+  echo "   Un AC bloqueado o pendiente no es un AC cumplido."
   exit 1
 fi
 

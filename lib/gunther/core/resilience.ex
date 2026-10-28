@@ -209,6 +209,9 @@ defmodule Gunther.Resilience do
   def backoff_ms(attempt, base_ms, cap_ms, remaining_ms) when attempt >= 1 do
     raw = base_ms * Integer.pow(2, attempt - 1)
     capped = min(raw, cap_ms)
-    min(capped, remaining_ms)
+    # El backoff no se limita por lo que queda en negativo: si no queda
+    # plazo, el backoff es 0 y quien decide es el pipeline (que no reintenta
+    # sin margen). Un retraso negativo reventaria con `Process.sleep/1`.
+    min(capped, max(remaining_ms, 0))
   end
 end

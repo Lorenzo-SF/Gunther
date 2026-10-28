@@ -1,0 +1,14 @@
+# G-10 · devices del motor
+# fecha: 2026-10-28
+# binario: <no encontrado>
+
+NO HAY BINARIO: no se puede grabar la salida de --list-devices.
+
+Pasalo como argumento:
+    probes/g10_list_devices.sh /ruta/a/llama-server
+
+Lo que se necesita para cerrar el AC de F2:
+  - la salida de --list-devices de un equipo con CUDA
+  - la de uno con Vulkan
+  - la de uno con ROCm
+  - la de uno con Metal

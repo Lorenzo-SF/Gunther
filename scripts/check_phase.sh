@@ -264,6 +264,33 @@ comp_registro() {
   return 0
 }
 
+# Un doctest que no se ejecuta es un doctest muerto: parece documentacion
+# verificada y no lo es. Este modulo del nucleo tiene doctests declarados
+# en `test/gunther/doctests_test.exs`, y todo modulo de `lib/` con un
+# `iex>` tiene que estar ahi. Si se anade un doctest y no se declara, la
+# comprobacion falla.
+comp_doctests() {
+  local declarados
+  declarados=$(grep -oE "^  doctest [A-Za-z0-9_.]+" test/gunther/doctests_test.exs | awk '{print $2}' | sort -u)
+
+  local modulos
+  modulos=$(for fichero in $(find lib -name "*.ex"); do
+    if grep -q "iex>" "$fichero"; then
+      grep -m1 -oE "^defmodule [A-Za-z0-9_.]+" "$fichero" | awk '{print $2}'
+    fi
+  done | sort -u)
+
+  local faltan
+  faltan=$(comm -23 <(echo "$modulos") <(echo "$declarados"))
+
+  if [ -n "$faltan" ]; then
+    echo "modulos con doctests sin declarar en test/gunther/doctests_test.exs:"
+    echo "$faltan"
+    return 1
+  fi
+  return 0
+}
+
 # ---------------------------------------------------------------
 echo
 echo "== Cierre de la fase ${FASE:-?} =="
@@ -279,6 +306,7 @@ comprobar "lint de documento" bash scripts/doc_lint.sh
 comprobar "el paquete se construye y esta limpio" comp_paquete
 comprobar "el SPEC no ha cambiado sin revision nueva" comp_spec
 comprobar "el registro de fases declara la fase" comp_registro
+comprobar "todo doctest del nucleo se ejecuta" comp_doctests
 
 echo
 for linea in "${RESULTADOS[@]}"; do

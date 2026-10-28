@@ -8,10 +8,11 @@ defmodule Gunther.Embedder do
   `model_id/0` es **contrato**: al cambiarlo, los vectores viejos son inválidos
   y hay que reindexar (SPEC §8.5).
 
-  ## Ejemplos
+  ## El contrato `model_id/0`
 
-      iex> Gunther.Embedder.model_id()
-      "default"
+  Es un **callback**: cada embedder lo implementa. No hay un valor por
+  defecto en el modulo, porque un vector valido depende del embedder que
+  se use: por eso el valor vive en la implementacion, no aqui.
   """
 
   @callback embed([binary()], opts :: keyword()) :: {:ok, [[float()]]} | {:error, term()}

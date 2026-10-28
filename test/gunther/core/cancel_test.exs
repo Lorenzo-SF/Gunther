@@ -1,8 +1,6 @@
 defmodule Gunther.CancelTest do
   use ExUnit.Case, async: true
 
-  doctest Gunther.Cancel
-
   test "un token nuevo no esta cancelado" do
     refute Gunther.Cancel.cancelled?(Gunther.Cancel.new())
   end

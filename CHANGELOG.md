@@ -4,6 +4,41 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado
 
 ## [Sin publicar]
 
+### F2 en curso: recursos, y los doctests que no se ejecutaban — 2026-10-28
+
+**F2 (recursos), en curso**
+
+- `Gunther.Ggml.Type`: la tabla de tipos de ggml **medida contra `ggml-common.h`**. Los bytes por elemento se leen de la tabla, no se fijan a mano: `f32` 4, `f16` 2, `bf16` 2, `q8_0` 34/32, `q5_1` 24/32, `q5_0` 22/32, `q4_1` 20/32, `q4_0` 18/32. `q8_0` ocupa **1,0625 bytes por elemento**, la mitad que `f16`.
+- `Gunther.Gguf`: parser propio de la cabecera GGUF (v2 y v3), con metadatos de todos los tipos, arrays, infos de tensor y `tensor_bytes/1` con la aritmetica de `ggml_nbytes`.
+- `Gunther.Resource.Weight`: la formula de KV por capa, con GQA y MHA, `key_length` y `value_length` **por separado**, `type_k` y `type_v` distintos, y MLA y SSM como no aplicables.
+- `Gunther.Resource.Ledger`: reescrito con las dos convenciones de medida (A: la del motor; B: la del sistema), memoria ajena, quiescencia y congelacion, memoria unificada, `:no_room` y `:device_unusable`, `reset/0`, `resync/3` y `subscribe/2`.
+- `Gunther.Engine.Placer`: elige device con un orden explicito (`prefer`, luego local, luego mayor `available`, luego `physical_id`), margen de 1024 MiB, tope por conteo y los errores `:no_gpu`, `:no_room`, `:memory_unknown` y `:device_unusable`.
+- `Gunther.Detector.LlamaCpp` y `Gunther.Detector.Engine`: parsean la salida de `llama-server --list-devices` con el formato **medido en la fuente** (`common/arg.cpp`), y lo ejecutan por `Gunther.Command`, que es la unica puerta de ejecucion.
+- `probes/g10_list_devices.sh`: recoge las salidas reales de `--list-devices` (y de las herramientas del sistema) para los AC que dependen de hardware.
+
+**El `swa_full` por defecto**
+
+- El SPEC §11.5 describe la ventana deslizante como una cota. El defecto **medido** en llama.cpp (`src/llama-context.cpp:4034`) es `swa_full = true`: la ventana se aplica a **todas** las capas y la formula es **exacta**. El codigo usa el defecto real. **Esto pide una revision r10 del SPEC**, con su entrada en el Anexo D; no se toca el SPEC en silencio.
+
+**Los doctests no se ejecutaban**
+
+- De 53 modulos del nucleo con doctests, **solo 4** estaban declarados en un test: **157 doctests nunca se ejecutaron**. Y de los que si se ejecutaban, **42 estaban mal**: hashes inventados, un `kv_mib` con la aritmetica ingenua (la de `ggml_nbytes` da 131_072_000), un `cost_micros` con un factor 1000 de error, una firma de funcion que ya no existia, y cuatro que reventaban.
+- Ahora hay `test/gunther/doctests_test.exs`, que declara **todos** los doctests del nucleo (**189**, todos en verde), y `scripts/check_phase.sh` comprueba que todo modulo de `lib/` con un `iex>` esta ahi: un doctest nuevo sin declarar rompe la comprobacion. Un doctest que no se ejecuta es un doctest muerto, y parece documentacion verificada.
+- Los doctests con estado global (el registro, el selector, la memoria) usan ahora su propio `consumer`, para que el resultado no dependa del orden de los tests.
+
+**Corregido (bugs reales, ninguno cubierto por tests)**
+
+- **La memoria no escribia nunca.** `Gunther.Memory.Server` tenia las dos ramas de `put/3` **invertidas**: sin `:if_version` comparaba la version actual contra `nil` (siempre distinto) y devolvia `version_conflict` **siempre**; con `:if_version` escribia sin comprobar nada. `put` no escribia, ni la primera vez. No habia ningun test de `if_version`.
+- **Las claves de un ambito se filtraban a los demas.** `keys/1` quitaba el prefijo con `String.replace_prefix/3` sobre todas las claves de la tabla: las de otro ambito salian con el prefijo de otro consumidor dentro.
+- **`Process.sleep/1` con un valor negativo.** En `Gunther.Resilience.Pipeline`, el backoff se limitaba por `min(capped, remaining)` y `remaining` puede ser negativo si el plazo se agota entre el intento y el calculo: se esperaba una cantidad negativa y reventaba. Intermitente, porque solo pasaba cuando el reloj caia en esa ventana.
+- **La lista de permitidos reventaba con una entrada malformada.** `Gunther.Command.AllowList.resolve/2` hacia `entry[:name]` sobre la entrada: si no era un mapa, era `FunctionClauseError` en vez de `:command_blocked`. Ahora una ruta se acepta como nombre y ruta, y cualquier otra forma bloquea.
+- **El router y el Placer reventaban con datos mal formados.** `Gunther.Router` accedia a `model.node` y `Gunther.Engine.Placer` a `model.device` directamente: un modelo incompleto era un `KeyError` o un `FunctionClauseError`, no un error.
+
+**El cierre de una fase, mas fuerte**
+
+- `scripts/check_phase.sh` tiene una comprobacion nueva: **todo doctest del nucleo se ejecuta**. Y `scripts/check_ac.sh` distingue los AC **bloqueados** (falta el hardware) y **pendientes** (el trabajo no esta hecho) de los **cumplidos**: un AC bloqueado no es un AC cumplido, y la fase no se cierra.
+- El selftest del checker ya no fija el numero de comprobaciones: lo **deriva** de la salida. La misma verdad en dos sitios siempre diverge.
+
 ### Correcciones editoriales y de licencia — 2026-10-28
 
 Correcciones solicitadas por el dueño, sin cambio de comportamiento (SPEC Anexo D.5, E-01 a E-06):

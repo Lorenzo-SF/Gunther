@@ -24,7 +24,7 @@ defmodule Gunther.Resilience.Pipeline do
 
   ## Ejemplos
 
-      iex> Gunther.Resilience.Pipeline.call(fn _attempt -> {:ok, :respuesta} end, [timeout: 5_000], [])
+      iex> Gunther.Resilience.Pipeline.call(fn _attempt, _budget -> {:ok, :respuesta} end, [timeout: 5_000], [])
       {:ok, :respuesta}
   """
 
@@ -52,7 +52,7 @@ defmodule Gunther.Resilience.Pipeline do
 
   ## Ejemplos
 
-      iex> Gunther.Resilience.Pipeline.call(fn _attempt -> {:error, :invalid_request} end, [timeout: 1_000], [])
+      iex> Gunther.Resilience.Pipeline.call(fn _attempt, _budget -> {:error, :invalid_request} end, [timeout: 1_000], [])
       {:error, %Gunther.Error{code: :invalid_request, message: "peticion invalida", retryable?: false, retry_after_ms: nil, details: %{original: :invalid_request}, cause: nil}}
   """
   @spec call((pos_integer(), non_neg_integer() -> {:ok, term()} | {:error, term()}), opts(), [term()]) ::
@@ -162,13 +162,26 @@ defmodule Gunther.Resilience.Pipeline do
   defp wait_ms(error, attempt, base_ms, cap_ms, deadline) do
     remaining = deadline - System.monotonic_time(:millisecond)
 
+    # Si ya no queda plazo, no hay espera: se devuelve el error. El plazo
+    # puede agotarse entre el intento y este calculo, y `remaining` puede
+    # ser negativo: un backoff negativo reventaria con `Process.sleep/1`.
+    if remaining <= 0 do
+      :no_time
+    else
+      wait_for(error, attempt, base_ms, cap_ms, remaining)
+    end
+  end
+
+  # El retraso que se pide: el `retry_after` del servicio manda sobre el
+  # backoff. Si no cabe en lo que queda, no se reintenta.
+  defp wait_for(error, attempt, base_ms, cap_ms, remaining) do
     case error.retry_after_ms do
       nil ->
         backoff = Resilience.backoff_ms(attempt, base_ms, cap_ms, remaining)
         if backoff > remaining, do: :no_time, else: backoff
 
       retry_after ->
-        if retry_after > remaining, do: :no_time, else: retry_after
+        if retry_after > remaining, do: :no_time, else: max(retry_after, 0)
     end
   end
 

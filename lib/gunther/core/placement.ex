@@ -29,8 +29,9 @@ defmodule Gunther.Placement do
 
   ## Ejemplos
 
-      iex> Gunther.Placement.start_link()
-      {:ok, pid}
+      iex> _ = Gunther.Placement.start_link()
+      iex> Gunther.Placement.track(:modelo_doc, "nodo-doc-track")
+      :ok
   """
   @spec track(atom(), String.t()) :: :ok
   def track(model_alias, node) do
@@ -42,8 +43,11 @@ defmodule Gunther.Placement do
 
   ## Ejemplos
 
-      iex> Gunther.Placement.start_link()
-      {:ok, pid}
+      iex> _ = Gunther.Placement.start_link()
+      iex> Gunther.Placement.track(:modelo_doc_untrack, "nodo-doc-untrack")
+      :ok
+      iex> Gunther.Placement.untrack(:modelo_doc_untrack)
+      :ok
   """
   @spec untrack(atom()) :: :ok
   def untrack(model_alias) do
@@ -55,8 +59,11 @@ defmodule Gunther.Placement do
 
   ## Ejemplos
 
-      iex> Gunther.Placement.start_link()
-      {:ok, pid}
+      iex> _ = Gunther.Placement.start_link()
+      iex> Gunther.Placement.track(:modelo_doc_loaded, "nodo-doc-loaded")
+      :ok
+      iex> Gunther.Placement.loaded_in("nodo-doc-loaded")
+      [:modelo_doc_loaded]
   """
   @spec loaded_in(String.t()) :: [atom()]
   def loaded_in(node) do
@@ -71,8 +78,9 @@ defmodule Gunther.Placement do
 
   ## Ejemplos
 
-      iex> Gunther.Placement.start_link()
-      {:ok, pid}
+      iex> _ = Gunther.Placement.start_link()
+      iex> Gunther.Placement.can_load?("nodo-doc-can-load")
+      true
   """
   @spec can_load?(String.t()) :: boolean()
   def can_load?(node) do

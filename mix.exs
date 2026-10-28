@@ -10,6 +10,10 @@ defmodule Gunther.MixProject do
       version: @version,
       elixir: "~> 1.19",
       start_permanent: Mix.env() == :prod,
+      # `test/support` lleva el constructor de cabeceras GGUF que usan los
+      # tests del parser. No entra en el paquete: `files:` lista `lib`
+      # explicitamente.
+      elixirc_paths: elixirc_paths(Mix.env()),
       deps: deps(),
       name: "Gunther",
       description:
@@ -163,6 +167,9 @@ defmodule Gunther.MixProject do
       flags: [:unknown]
     ]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_env), do: ["lib"]
 
   defp aliases do
     [

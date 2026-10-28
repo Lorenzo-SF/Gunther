@@ -60,9 +60,9 @@ defmodule Gunther.Memory.Server do
 
   ## Ejemplos
 
-      iex> Gunther.Memory.put("clave", "valor", [])
+      iex> Gunther.Memory.Server.put("clave", "valor", consumer: "doc-put")
       :ok
-      iex> Gunther.Memory.get("clave", nil, [])
+      iex> Gunther.Memory.Server.get("clave", nil, consumer: "doc-put")
       "valor"
   """
   @spec put(binary(), term(), keyword()) :: :ok | {:error, Error.t()}
@@ -80,9 +80,9 @@ defmodule Gunther.Memory.Server do
 
   ## Ejemplos
 
-      iex> Gunther.Memory.put_new("nueva", 1, [])
+      iex> Gunther.Memory.Server.put_new("nueva", 1, consumer: "doc-put-new")
       :ok
-      iex> Gunther.Memory.put_new("nueva", 2, [])
+      iex> Gunther.Memory.Server.put_new("nueva", 2, consumer: "doc-put-new")
       {:error, :exists}
   """
   @spec put_new(binary(), term(), keyword()) :: :ok | {:error, :exists}
@@ -99,7 +99,7 @@ defmodule Gunther.Memory.Server do
 
   ## Ejemplos
 
-      iex> Gunther.Memory.get("inexistente", "defecto", [])
+      iex> Gunther.Memory.Server.get("inexistente", "defecto", consumer: "doc-get")
       "defecto"
   """
   @spec get(binary(), term(), keyword()) :: term()
@@ -126,7 +126,7 @@ defmodule Gunther.Memory.Server do
 
   ## Ejemplos
 
-      iex> Gunther.Memory.keys([])
+      iex> Gunther.Memory.Server.keys(consumer: "doc-keys")
       []
   """
   @spec keys(keyword()) :: [binary()]
@@ -140,7 +140,9 @@ defmodule Gunther.Memory.Server do
 
   ## Ejemplos
 
-      iex> Gunther.Memory.supersede("vieja", "nueva", [])
+      iex> Gunther.Memory.Server.put("vieja", 1, consumer: "doc-supersede")
+      :ok
+      iex> Gunther.Memory.Server.supersede("vieja", "nueva", consumer: "doc-supersede")
       :ok
   """
   @spec supersede(binary(), binary(), keyword()) :: :ok
@@ -154,7 +156,7 @@ defmodule Gunther.Memory.Server do
 
   ## Ejemplos
 
-      iex> Gunther.Memory.version("inexistente", [])
+      iex> Gunther.Memory.Server.version("inexistente", consumer: "doc-version")
       nil
   """
   @spec version(binary(), keyword()) :: non_neg_integer() | nil
@@ -201,7 +203,12 @@ defmodule Gunther.Memory.Server do
         [] -> 1
       end
 
+    # Sin `:if_version` se escribe siempre: la condicion es para el que
+    # escribe sobre una version concreta (D-90). Con `:if_version`, solo se
+    # escribe si la version actual es la esperada.
     if is_nil(if_version) do
+      {:reply, :ok, do_put(state, full_key, consumer, key, value, author, version, ttl_ms)}
+    else
       current_version =
         case current do
           [{^full_key, entry}] -> entry.meta.version
@@ -217,8 +224,6 @@ defmodule Gunther.Memory.Server do
             details: %{key: key, expected: if_version, actual: current_version}
           )}, state}
       end
-    else
-      {:reply, :ok, do_put(state, full_key, consumer, key, value, author, version, ttl_ms)}
     end
   end
 
@@ -247,10 +252,17 @@ defmodule Gunther.Memory.Server do
   def handle_call({:keys, consumer}, _from, state) do
     prefix = "mem:#{consumer}:"
 
+    # Solo las claves **de este** ambito: `String.replace_prefix` deja intacta
+    # la que no empieza por el prefijo, y esa no se devuelve.
     keys =
       state.table
       |> :ets.tab2list()
-      |> Enum.map(fn {full_key, _entry} -> String.replace_prefix(full_key, prefix, "") end)
+      |> Enum.flat_map(fn {full_key, _entry} ->
+        case String.replace_prefix(full_key, prefix, "") do
+          ^full_key -> []
+          key -> [key]
+        end
+      end)
       |> Enum.sort()
 
     {:reply, keys, state}

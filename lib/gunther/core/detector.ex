@@ -35,7 +35,7 @@ defmodule Gunther.Detector do
         }
 
   @callback devices(opts :: keyword()) :: {:ok, [device()]} | {:error, term()}
-  @callback measure(physical_id :: binary()) ::
+  @callback measure(physical_id :: binary(), opts :: keyword()) ::
               {:ok,
                %{
                  total_mib: non_neg_integer(),

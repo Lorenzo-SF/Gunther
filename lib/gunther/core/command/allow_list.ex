@@ -36,13 +36,44 @@ defmodule Gunther.Command.AllowList do
   def resolve(cmd, opts) do
     allow = Keyword.get(opts, :allow, [])
 
-    case Enum.find(allow, fn entry -> entry[:name] == cmd or entry["name"] == cmd end) do
+    case Enum.find(allow, &matches?(&1, cmd)) do
       nil ->
         {:error,
          Error.new(:command_blocked, "el comando no esta en la lista de permitidos: #{cmd}", details: %{command: cmd})}
 
       entry ->
-        check(entry)
+        case normalize(entry) do
+          nil ->
+            {:error,
+             Error.new(:command_blocked, "la entrada de la lista de permitidos no es valida", details: %{command: cmd})}
+
+          normalized ->
+            check(normalized)
+        end
+    end
+  end
+
+  # La forma canonica es el mapa `{name, path, sha256?}` (SPEC §3.4). Una
+  # entrada que es una ruta se interpreta como nombre y ruta. Cualquier otra
+  # cosa no se puede autorizar: bloquea, y no revienta.
+  defp normalize(entry) when is_binary(entry) do
+    %{name: entry, path: entry, sha256: nil}
+  end
+
+  defp normalize(entry) when is_map(entry) do
+    %{
+      name: entry[:name] || entry["name"],
+      path: entry[:path] || entry["path"],
+      sha256: entry[:sha256] || entry["sha256"]
+    }
+  end
+
+  defp normalize(_entry), do: nil
+
+  defp matches?(entry, cmd) do
+    case normalize(entry) do
+      %{name: name} -> is_binary(name) and name == cmd
+      _other -> false
     end
   end
 
@@ -62,6 +93,10 @@ defmodule Gunther.Command.AllowList do
          inode: inode
        }}
     end
+  end
+
+  defp realpath(nil) do
+    {:error, Error.new(:command_blocked, "la entrada de la lista de permitidos no tiene ruta", details: %{path: nil})}
   end
 
   defp realpath(path) do

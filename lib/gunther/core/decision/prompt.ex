@@ -24,7 +24,9 @@ defmodule Gunther.Decision.Prompt do
       ...> }
       iex> view = Gunther.DecisionView.new(text: "arregla este bug", roles: [:user])
       iex> prompt = Gunther.Decision.Prompt.render({:builtin, :preference_router}, spec, view)
-      iex> String.ends_with?(prompt, "arregla este bug")
+      iex> String.contains?(prompt, "arregla este bug")
+      true
+      iex> String.contains?(prompt, "Programacion")
       true
   """
 
@@ -38,8 +40,9 @@ defmodule Gunther.Decision.Prompt do
 
   ## Ejemplos
 
-      iex> Gunther.Decision.Prompt.render({:builtin, :preference_router}, nil, nil)
-      ""
+      iex> prompt = Gunther.Decision.Prompt.render({:builtin, :preference_router}, nil, nil)
+      iex> String.contains?(prompt, "(ninguna)")
+      true
   """
   @spec render({:builtin, atom()} | {:module, module()}, map() | nil, map() | nil) :: binary()
   def render({:module, module}, spec, view) do

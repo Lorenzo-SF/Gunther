@@ -11,11 +11,15 @@
 #
 # Este script comprueba el checker con dobles, sin correr la suite:
 #
-#   1. Todas las comprobaciones en verde  -> salida 0, diez "OK", un
-#      "cumple las comprobaciones del cierre".
+#   1. Todas las comprobaciones en verde  -> salida 0, un "OK" por
+#      comprobacion y un "cumple las comprobaciones del cierre".
 #   2. Una comprobacion en rojo           -> salida 1, esa comprobacion
-#      aparece marcada como FALLA, las otras ocho siguen apareciendo como
-#      OK, y el motivo del fallo se imprime.
+#      aparece marcada como FALLA, las demas siguen apareciendo como OK, y
+#      el motivo del fallo se imprime.
+#
+# El numero de comprobaciones se deriva de la salida: no se escribe aqui,
+# para que anadir una comprobacion al checker no rompa esta
+# autocomprobacion.
 #
 # El segundo caso es el que importa: si un fallo vuelve a desaparecer del
 # informe, este script falla.
@@ -46,8 +50,13 @@ if [ $rc_ok -ne 0 ]; then
 fi
 
 n_ok=$(echo "$salida_ok" | grep -cE "^  OK ")
-if [ "$n_ok" -ne 10 ]; then
-  fallar "se esperaban 10 comprobaciones en verde y hay $n_ok"
+
+# El numero de comprobaciones se **deriva** de la salida, no se escribe
+# aqui: si se anade una comprobacion al checker, este script no se rompe
+# (la misma verdad en dos sitios siempre diverge).
+n_total=$n_ok
+if [ "$n_total" -lt 1 ]; then
+  fallar "la salida en verde no tiene ninguna comprobacion"
 fi
 
 n_falla=$(echo "$salida_ok" | grep -cE "^  FALLA ")
@@ -77,8 +86,8 @@ if [ $rc_falla -eq 0 ]; then
 fi
 
 n_falla_todas=$(echo "$salida_falla" | grep -cE "^  FALLA ")
-if [ "$n_falla_todas" -ne 10 ]; then
-  fallar "con todas las comprobaciones en rojo deberian ser 10, y son $n_falla_todas"
+if [ "$n_falla_todas" -ne "$n_total" ]; then
+  fallar "con todas las comprobaciones en rojo deberian ser $n_total, y son $n_falla_todas"
 fi
 
 if [ $rc_una -eq 0 ]; then
@@ -90,8 +99,8 @@ if ! echo "$salida_una" | grep -qF "  FALLA $ROJA"; then
 fi
 
 n_ok_una=$(echo "$salida_una" | grep -cE "^  OK ")
-if [ "$n_ok_una" -ne 9 ]; then
-  fallar "con una comprobacion en rojo deberian quedar 9 en verde, y quedan $n_ok_una"
+if [ "$n_ok_una" -ne $((n_total - 1)) ]; then
+  fallar "con una comprobacion en rojo deberian quedar $((n_total - 1)) en verde, y quedan $n_ok_una"
 fi
 
 n_falla_una=$(echo "$salida_una" | grep -cE "^  FALLA ")
@@ -110,9 +119,9 @@ fi
 # --- Caso 3: el informe se imprime entero ----------------------------------
 # El fallo original hacia que el script terminara con exit 0 y **sin
 # imprimir el informe**. Con el doble en verde, el informe tiene que
-# tener las diez lineas de resultado.
-if [ "$(echo "$salida_ok" | grep -cE "^  (OK|FALLA) ")" -ne 10 ]; then
-  fallar "el informe no tiene las diez lineas de resultado"
+# tener una linea por comprobacion.
+if [ "$(echo "$salida_ok" | grep -cE "^  (OK|FALLA) ")" -ne "$n_total" ]; then
+  fallar "el informe no tiene las $n_total lineas de resultado"
 fi
 
 # --- Resumen ---------------------------------------------------------------

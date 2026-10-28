@@ -517,10 +517,13 @@ defmodule Gunther.Router do
   end
 
   defp build(model, reason, layers_ran, ranked, filtered, applied_consumer, applied_global, degraded \\ []) do
+    # Un modelo de un catalogo mal formado no revienta el enrutado: la
+    # decision sale con lo que haya, y el `reason` lo delata. Los errores
+    # son valores (SPEC §4.13), no excepciones.
     %Decision{
-      chosen: model.alias,
-      provider: model.provider,
-      node: model.node,
+      chosen: Map.get(model, :alias),
+      provider: Map.get(model, :provider),
+      node: Map.get(model, :node),
       ranked: ranked,
       reason: reason,
       layers_ran: layers_ran,
