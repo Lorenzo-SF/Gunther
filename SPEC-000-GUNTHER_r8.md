@@ -1,5 +1,7 @@
 # SPEC-000-GUNTHER — Especificación completa (r8)
 
+> **Nota de estado (2026-10-28).** Este documento se conserva como **histórico**, sin modificar. La revisión vigente es `SPEC-000-GUNTHER_r9.md`. Las correcciones editoriales **E-01 a E-06** (bloque TOML y precedencia de §6.8.1, `Arrea.Resource` —que **no** está publicado en Hex—, recuento de 32 puertas, redacción de la Regla final y `LICENSE`/`NOTICE` oficiales) están aplicadas en r9, no aquí. En particular, la afirmación de este documento de que `Arrea.Resource` «existe y está publicado» **era falsa**: existe en `main` y su publicación en Hex está pendiente de G-28.
+>
 > **Punto único de conocimiento de Gunther** (antes Candil, D-63). Si algo no está aquí, no está decidido. Si está aquí y en otro sitio, el otro sitio es un error.
 >
 > **Estado**: r8, **aprobada por el dueño. DP0 cerrado. F0 en ejecución.** **Base**: r7 más las respuestas del dueño a Q-09 a Q-16 (`CIERRE-DP0.md`), la ratificación de D-48 a D-92 y los cambios M-01 a M-11 y CE-34. **Fecha de r8**: 2026-10-26.

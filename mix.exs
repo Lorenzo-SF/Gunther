@@ -61,7 +61,7 @@ defmodule Gunther.MixProject do
         "NOTICE",
         "SECURITY.md",
         "CONTRIBUTING.md",
-        "SPEC-000-GUNTHER_r8.md",
+        "SPEC-000-GUNTHER_r9.md",
         "docs"
       ],
       links: %{
@@ -80,7 +80,7 @@ defmodule Gunther.MixProject do
         "CHANGELOG.md",
         "SECURITY.md",
         "CONTRIBUTING.md",
-        "SPEC-000-GUNTHER_r8.md",
+        "SPEC-000-GUNTHER_r9.md",
         "LICENSE",
         "NOTICE"
       ],

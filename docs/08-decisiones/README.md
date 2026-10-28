@@ -151,7 +151,7 @@ Aceptadas en DP0.
 | J-04 | D-09, D-11 | «El defecto no está puesto» frente a `policy = "wait"`                                              | §14.1                 | incoherencia |
 | J-05 | D-09       | `[consumer.X]` con `model_default` obligatorio frente a ausencia de la sección                      | §14.1, §4.2           | incoherencia |
 | J-06 | D-12       | `Telemetry.Quality` frente a eventos de §13.1 sin esa métrica                                       | §13.1                 | incoherencia |
-| J-07 | D-13       | `Arrea.Resource` existe y está publicado frente a «no verificado»                                   | §3.2, D-48            | incoherencia |
+| J-07 | D-13       | `Arrea.Resource` existe en `main` según la medición del dueño (D-13); su publicación en Hex está pendiente de G-28 | §3.2, D-48            | incoherencia |
 | J-08 | D-15       | `[consumer.X] priority` y envejecimiento frente a «prioridad como peso» sin definir                 | §5.8, §14.1           | incoherencia |
 | J-09 | D-18       | CLI con su fase frente a «sin CLI»                                                                  | §1.1, D-31            | incoherencia |
 | J-10 | D-20       | Agente con circuito abierto no reinicia frente a regla retirada                                     | §10.1                 | incoherencia |
@@ -164,7 +164,7 @@ Aceptadas en DP0.
 
 Quedan dos premisas que el dueño ya cerró en r8:
 
-- **Q-14**: `Arrea.Resource` existe y está publicado. Ledger propio en v1. G-28 puede proponer fachada más adelante.
+- **Q-14**: `Arrea.Resource` existe en `main` según la medición del dueño (D-13); su publicación en Hex está pendiente de G-28. Ledger propio en v1. G-28 puede proponer fachada más adelante.
 - **Q-15**: los tres niveles de D-09 son `[[consumers.<id>.rules]]`, `[[rules]]` y `default_model` (ver §6.8.1 del SPEC r8).
 
 ## Cambios para r7 (decisiones D-29 a D-47): aplicados en r7
@@ -199,7 +199,7 @@ Cerradas por las decisiones del dueño y sin cambio en el SPEC: I-03, I-06, I-09
 
 ## Cambios para r8 (decisiones D-48 a D-92 y Q-01 a Q-16)
 
-Aplicados en r8. El detalle está en `SPEC-000-GUNTHER_r8.md`, Anexo D.
+Aplicados en r8. El detalle está en `SPEC-000-GUNTHER_r9.md`, Anexo D.
 
 | #     | Sección                                             | Cambio                                                               | Origen      | Estado         |
 | ----- | --------------------------------------------------- | -------------------------------------------------------------------- | ----------- | -------------- |

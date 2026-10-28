@@ -2,7 +2,7 @@
 
 Librería de Elixir para usar varios modelos de lenguaje configurados como si fueran uno: un enrutador decide a qué modelo va cada petición, con ranking, traza y failover. Los modelos pueden ser de nube, locales (gestionando su arranque y apagado) o de otro PC gestionado de forma remota.
 
-**Estado**: en construcción — DP0 cerrado, F0 cerrado (11 puertas medidas), F1 en ejecución. La especificación vigente es `SPEC-000-GUNTHER_r8.md`; la documentación, `docs/00-indice.md`; el registro de fases y puertas, `docs/13-registro-de-fases.md`. El cierre de DP0 está en `CIERRE-DP0.md`. La primera versión se publicará en Hex como `gunther` (el nombre está libre, puerta G-16).
+**Estado**: en construcción — DP0, F0 y F1 cerrados. La especificación vigente es `SPEC-000-GUNTHER_r9.md`; la documentación, `docs/00-indice.md`; el registro de fases y puertas, `docs/13-registro-de-fases.md`. El cierre de DP0 está en `CIERRE-DP0.md`. La primera versión se publicará en Hex como `gunther` (el nombre está libre, puerta G-16).
 
 **Qué no hace**: no descarga ni distribuye modelos ni binarios; no soporta Windows; no incluye ningún modelo decisor.
 

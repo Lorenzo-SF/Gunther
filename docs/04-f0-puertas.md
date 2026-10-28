@@ -159,7 +159,7 @@ Matriz con los criterios de G-22 más cobertura de 2026-07-28 y control de SSRF,
 
 Leer el código de Arrea.Leader, Worker, Monitor y el pool de la versión elegida; comprobar R-A1 a R-A5 (SPEC §22.15); leer el registro de cambios de 4.0.0; comprobar si existe Arrea.Resource y en qué versión. Pasa si cumple los cinco requisitos. Falla ⇒ implementación propia (D-78) y las propuestas A-1 a A-8 al autor de Arrea.
 
-Nota (Q-14, r8). Arrea.Resource existe y está publicado (D-13). G-28 no vuelve a comprobar la existencia; comprueba si, con su API pública actual, permite implementar foreign y available de §11.3 sin duplicar medidas. G-28 no bloquea F1.
+Nota (Q-14, r8). Arrea.Resource existe en `main` según la medición del dueño (D-13); su publicación en Hex está pendiente de G-28 (D-13). G-28 no vuelve a comprobar la existencia; comprueba si, con su API pública actual, permite implementar foreign y available de §11.3 sin duplicar medidas. G-28 no bloquea F1.
 
 ### G-29 · Caché de prompt
 

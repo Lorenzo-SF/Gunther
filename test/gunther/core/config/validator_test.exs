@@ -191,6 +191,11 @@ defmodule Gunther.Config.ValidatorTest do
       assert {:error, %Error{code: :config_error}} = Config.load(raw)
     end
 
+    test "un consumer sin default_model es config_error" do
+      assert {:error, %Error{code: :config_error}} =
+               Config.load(base(%{"consumers" => %{"default" => %{}}}))
+    end
+
     test "consumers.default_model debe ser un alias del catalogo" do
       assert {:error, %Error{code: :config_error} = error} =
                Config.load(base(%{"consumers" => %{"default" => %{"default_model" => "no_existe"}}}))

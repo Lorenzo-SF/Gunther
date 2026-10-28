@@ -135,7 +135,9 @@ defmodule Gunther.Catalog do
         [name | Enum.map(consumer.rules, &fingerprint/1)]
       end)
       |> Enum.sort(),
-      config.decision_models |> Enum.map(& &1.id) |> Enum.sort()
+      # El DecisionSpec entero, con su estado de verificacion: si cambian
+      # sus rutas o su informe, el hash cambia y la cache se invalida (§6.5).
+      config.decision_models |> Enum.map(&fingerprint/1) |> Enum.sort()
     ]
   end
 
