@@ -296,6 +296,33 @@ comp_doctests() {
 }
 
 # ---------------------------------------------------------------
+# 10. La nota de fase es coherente y la cola se puede derivar.
+# ---------------------------------------------------------------
+# La nota de fase es lo que convierte "la fase F3" en "el WP F3-04". Si sus
+# filas no se reconocen, `next_task.sh` no sabe que hacer. Y si la cola no
+# sale, el coder se queda sin tarea: eso es un trabajo parado.
+comp_cola() {
+  local out rc
+  out=$(bash scripts/next_task.sh --json 2>&1)
+  rc=$?
+
+  # 0 = hay una tarea; 1 = la fase esta completa. Los dos son validos.
+  # Cualquier otro codigo, o una salida que no se puede leer, no lo son.
+  if [ $rc -ne 0 ] && [ $rc -ne 1 ]; then
+    echo "next_task.sh salio con $rc"
+    echo "$out" | tail -20
+    return 1
+  fi
+
+  if ! echo "$out" | grep -q '"tarea"'; then
+    echo "next_task.sh no devolvio una tarea legible"
+    echo "$out" | tail -20
+    return 1
+  fi
+  return 0
+}
+
+# ---------------------------------------------------------------
 echo
 echo "== Cierre de la fase ${FASE:-?} =="
 echo
@@ -311,6 +338,7 @@ comprobar "el paquete se construye y esta limpio" comp_paquete
 comprobar "el SPEC no ha cambiado sin revision nueva" comp_spec
 comprobar "el registro de fases declara la fase" comp_registro
 comprobar "todo doctest del nucleo se ejecuta" comp_doctests
+comprobar "la cola de trabajo se puede derivar del repositorio" comp_cola
 
 echo
 for linea in "${RESULTADOS[@]}"; do

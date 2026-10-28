@@ -56,15 +56,11 @@ al primero.
 | F1 | **Cerrada** | Núcleo: config, validador, catálogo, errores, comando, caché, cancelación, telemetría, contexto, decisión. |
 | F2 | **En curso** | Recursos: tipos de ggml, parser GGUF, fórmula de KV, ledger, placer, colocación por nodo, detectores y calibración de overhead. |
 
-La última medición, con el toolchain oficial (Erlang 28.5.0.7 +
-Elixir 1.19.5-otp-28):
-
-```
-196 doctests, 5 properties, 404 tests, 0 failures
-mix credo --strict --format=oneline   ->  0 avisos
-mix dialyzer                           ->  0 errores
-scripts/check_phase.sh F2              ->  11 de 11 comprobaciones en verde
-```
+**Las cifras exactas no están aquí, y a propósito.** El número de tests, de
+doctests y de AC cumplidos se lee en `docs/13-registro-de-fases.md` y en la
+salida de los scripts. Una cifra escrita en un documento de planificación es
+una cifra que se queda vieja, y una cifra vieja es peor que ninguna: el
+modelo contesta con datos de un repo que ya no es este.
 
 ### 1.2 Qué falta dentro de F2
 
@@ -295,11 +291,11 @@ abierto).
 | `mix compile --force --warnings-as-errors` | Avisos del compilador. | Un aviso en Elixir 1.19 suele ser un `@spec` que no casa. |
 | `mix credo --strict --format=oneline` | Avisos de Credo de **todas** las prioridades. | Sin `--strict` y sin contar los avisos, el check **nunca ve nada**. |
 | `mix dialyzer` | Tipos. | El type checker de Elixir 1.19 y Dialyzer pillan lo que los tests no ven. |
-| `mix test` | La suite. | 196 doctests, 5 properties, 404 tests. |
+| `mix test` | La suite. | Todo lo que hay. El número exacto se ve en la salida. |
 | `bash scripts/check_boundaries.sh` | Las fronteras de §3.4 y §3.6. | `Gunther.Command` como única puerta de ejecución. |
 | `bash scripts/doc_lint.sh` | El texto normativo. | Prohíbe «suponer», «estimar» y «aproximadamente». |
 | `bash scripts/check_ac.sh docs/fases/F3.md F3` | Los AC de la fase, uno a uno. | Un AC sin test es un AC sin cumplir. |
-| `bash scripts/check_phase.sh F3` | Las once comprobaciones del cierre. | La puerta de la fase. |
+| `bash scripts/check_phase.sh F3` | Todas las comprobaciones del cierre. | La puerta de la fase. |
 
 `check_phase.sh` corre la suite **tres veces seguidas**: una suite que pasa
 una vez y falla otra es una suite intermitente, y una suite intermitente es un
@@ -323,23 +319,75 @@ revisan:
 
 ## 4. La cola
 
-### 4.1 WP-0 — La nota de fase de F3 (lo primero)
+### 4.1 La cola está en el repositorio, no en este documento
 
-La primera fase del plan de desarrollo empieza por **DP3, el diseño de fase**:
-una nota de una página (`docs/fases/F3.md`) con las decisiones locales y los
-paquetes de trabajo, revisada **antes** de escribir código.
+**La cola no es una lista escrita a mano.** Una lista escrita a mano se pudre en
+silencio: nadie la actualiza, el modelo trabaja sobre una lista que ya no
+describe el repositorio, y el síntoma sale cuando el trabajo ya está hecho
+mal. Es el mismo fallo que una lista de checkboxes, con el añadido de que
+el modelo no se queja: sigue adelante con confianza.
 
-Es también el mejor primer encargo para un modelo que acaba de tomar el
-relevo, por tres razones:
+La cola se **deriva**:
 
-- Obliga a leer el SPEC (§5, providers; §4.2; §19, AC de F3) y los ADR.
-- Es un entregable **completo y verificable** sin escribir una línea de
-  código: se sabe si está bien mirando si los AC están, si los WP están y si
-  las desviaciones están dichas.
-- Deja escrito el resto del plan de la fase, que es lo que el coder va a
-  seguir después sin necesitar al dueño.
+```bash
+bash scripts/next_task.sh
+```
 
-### 4.2 F3 · Provider, WP a WP
+De tres fuentes que ya existen y que no se pueden desincronizar entre sí:
+
+| Fuente | Qué dice |
+| ------ | -------- |
+| `docs/01-plan-de-desarrollo.md` | Qué fases hay, en qué orden y qué WP tiene cada una |
+| `docs/13-registro-de-fases.md` | Qué fases están cerradas (las que tienen **fecha** de fin) |
+| `docs/fases/Fnn.md` | Qué AC hay, con su test, y qué AC cierra cada WP |
+
+El script sale con:
+
+- **0** y la tarea: hay trabajo.
+- **1** y `no queda trabajo`: la fase está hecha (lo que queda depende del
+  hardware, y se dice qué AC son).
+
+**Un WP está terminado cuando todos sus AC están en verde**, y eso lo dice
+`scripts/check_ac.sh --machine`, que **ejecuta los tests de verdad**. No hay
+un "hecho" escrito a mano que se pueda quedar viejo.
+
+### 4.2 Por qué el modelo no elige la tarea
+
+Porque elegir es donde un modelo optimiza por lo que se le da mejor:
+contestar. Con "elige una tarea", la tarea elegida fue "verificar que todo
+está verde", que es un trabajo legítimo y no produce nada. Una sesión entera
+se fue en correr checks y resumir, y no salió **ni un fichero**.
+
+Con "ejecuta `scripts/next_task.sh` y haz lo que diga", la tarea viene de
+fuera, es ejecutable, y el criterio de fin está escrito en el mismo sitio.
+
+### 4.3 Los dos criterios de fin
+
+| Nivel | Termina cuando | Quién lo firma |
+| ----- | -------------- | -------------- |
+| **Sesión** | El WP está hecho: el test de cada AC existe y su fichero pasa entero, `mix check.all` en verde, y hay un commit con el prefijo del WP. | El coder |
+| **Fase** | La cola se agota (`next_task.sh` sale con 1) y `check_phase.sh` está en verde. | **El dueño** |
+
+Una sesión = **un WP**. El Nemotron tiene AA-LCR 52,38: en un contexto largo
+deja de encontrar lo que busca. Dos WP en una sesión es Context Rot.
+
+### 4.4 Lo que la nota de fase tiene que llevar
+
+Sin esto, la cola no se puede derivar:
+
+| Tabla | Celdas | Para qué |
+| ----- | ------ | -------- |
+| Los WP de la fase | **3** (`WP`, `Dependencias`, `AC que cierra`) | Qué WP hay y qué cierra cada uno |
+| Los AC y dónde se verifican | **4** (`#`, `AC`, `Test que lo verifica`, `En`) | Qué AC hay y qué test lo verifica |
+
+Se distinguen por el **número de celdas**, no por el nombre del
+identificador: un AC (`F4-12`) y un WP (`F4-12`) pueden llamarse igual.
+
+Una fila que no se reconoce (un número de celdas que no es 3 ni 4) hace
+**fallar** el script. Es mejor que se quede sin saber qué hacer a que decida
+sobre un estado inventado.
+
+### 4.5 F3 · Provider, WP a WP
 
 F3 es la siguiente fase que **no depende de hardware**, y es la que da un
 sistema de extremo a extremo sobre providers mock y cloud. El orden del plan
@@ -357,6 +405,9 @@ sistema de extremo a extremo sobre providers mock y cloud. El orden del plan
 | F3-08 | Commit de stream y `stream!/2` (§2.9) | Sin procesos vivos tras `cancel_grace_ms` |
 | F3-09 | Contadores de tokens y registro de `Tokenizer`; límite de adjuntos por tipo | Contrato |
 
+El mapeo WP → AC está en la nota de fase (`docs/fases/F3.md`), no aquí: la
+nota es su sitio, y copiarla aquí es tener la misma verdad en dos sitios.
+
 Los WP que **no** dependen de una GPU se pueden hacer enteros en local. F3-06
 necesita un `llama-server`: sirve un mock que hable el protocolo, que es lo que
 hace `Gunther.Provider.Mock`.
@@ -366,7 +417,7 @@ F1 (`lib/gunther/core/provider/mock.ex` y `contract_test.ex`). El WP no es
 escribirlos: es **extenderlos** a lo que F3 pide, y eso hay que decirlo en la
 nota de fase.
 
-### 4.3 F2 — Lo que solo falta es hardware
+### 4.6 F2 — Lo que solo falta es hardware
 
 Los dos AC pendientes de F2 no los puede cerrar el coder: necesitan una
 máquina con GPU. Lo que sí puede hacer:
@@ -529,6 +580,36 @@ son las que un modelo **no** detecta solo, porque a primera vista parecen lógic
 17. **Un assert enorme rompe el formatter de ExUnit.** Para comprobar un
     texto largo, comparar **longitud y SHA-256**, no el texto entero.
 
+### 6.4 En el prompt
+
+18. **Un prompt de agente necesita TAREA y CRITERIO de TERMINACIÓN.** La
+    primera sesión del Nemotron con el prompt anterior leyó el SPEC, exploró
+    el repositorio, corrió **todas** las comprobaciones (la suite entera,
+    Credo, Dialyzer y las puertas de F1 y F2) y respondió con un resumen de
+    ocho minutos. **Cero ficheros escritos.** Concluyó: «the implementation is
+    complete and all acceptance criteria for F1 have been verified and closed».
+
+    Lo que había hecho estaba bien. El problema era que **verificar no era la
+    tarea**, y la causa estaba en el prompt: describía el *método* (ciclo de
+    TDD, comprobaciones, trampas) pero no decía **qué hacer**, y decía «elige
+    una tarea». «Elige» es opcional; como «verificar» estaba en la lista de
+    cosas que hacer, verificar le parecía un trabajo terminado.
+
+    *Regla, y es transversal a cualquier agente:* sin un criterio de
+    terminación, un modelo optimiza por **poder contestar un resumen**, que es
+    lo que se le da mejor. Un prompt de agente necesita tres cosas:
+
+    1. **La tarea, en imperativo.** No «elige una tarea», sino lo que tiene
+       que hacer, con el contenido mínimo que tiene que tener.
+    2. **Lo que NO es un entregable, dicho explícitamente.** Leer, correr
+       checks y resumir es el **punto de partida**, no el resultado.
+    3. **El criterio de terminación.** Al terminar hay un **fichero nuevo o un
+       commit**. «Lo he verificado y todo está verde» no es un resumen del
+       trabajo.
+
+    Y la tarea no se escribe en el prompt: **se lee de un script**, que la
+    deriva del repositorio. Ver §4.1.
+
 ---
 
 ## 7. Los límites: lo que el coder no decide solo
@@ -559,7 +640,7 @@ Son **checks binarios**, no impresiones. Cada uno se responde con un comando.
 bash scripts/check_phase.sh F3
 ```
 
-Las once comprobaciones en verde. Si alguna está en rojo, el trabajo **no** se
+Todas las comprobaciones en verde. Si alguna está en rojo, el trabajo **no** se
 revisa: primero se arregla.
 
 ### 8.2 Los AC, uno a uno
@@ -610,13 +691,15 @@ check de formato.
 
 ## 9. Lo que viene después
 
-1. **WP-0**: la nota de fase de F3 (`docs/fases/F3.md`).
-2. **F3-01 a F3-03**: el behaviour de provider, el `ContractTest` genérico y
-   el `Mock` extendido.
-3. **F3-04 a F3-05**: el transporte y los tres providers, contra servidor
-   simulado.
-4. **F3-07 a F3-09**: salida estructurada, commit de stream y tokens.
-5. **En paralelo, cuando haya GPU**: el probe de F2 y el cierre de los dos AC
+La secuencia **no está escrita aquí**: la calcula `scripts/next_task.sh`. Lo
+que el dueño tiene que saber es cómo encadenarla:
+
+1. **Sesión por WP.** Cada sesión hace un WP y deja un commit. La sesión
+   siguiente arranca con `bash scripts/next_task.sh` y hace lo que diga.
+2. **La cola se agota sola.** Cuando el script salga con 1 y diga que no
+   queda trabajo, la fase está hecha y le toca al dueño: revisar, mirar la
+   CI y firmar el cierre.
+3. **En paralelo, cuando haya GPU**: el probe de F2 y el cierre de los dos AC
    de hardware.
 
 Y una constante: **cada fase termina con su puerta en verde y su nota de
@@ -636,5 +719,6 @@ existe para el siguiente.
 - `docs/03-estrategia-de-pruebas.md` — capas de prueba y casos obligatorios.
 - `docs/13-registro-de-fases.md` — el estado vivo.
 - `docs/fases/` — las notas de fase.
+- `scripts/next_task.sh` — la cola, derivada del repositorio.
 - `scripts/check_phase.sh`, `scripts/check_ac.sh` — las puertas ejecutables.
 - `probes/` — las sondas reproducibles.

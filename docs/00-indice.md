@@ -37,3 +37,5 @@
 7. `../AGENTS.md` — el contrato de trabajo de quien toque el repositorio.
 8. `14-planificacion-del-coder.md` — el plan del relevo, si vienes a continuar.
 9. `../PROMPT.md` — el prompt, si lo que quieres es poner al día a un modelo.
+10. `bash scripts/next_task.sh` — la tarea que toca ahora, si lo que quieres es
+    saber por dónde seguir.

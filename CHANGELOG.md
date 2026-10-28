@@ -4,6 +4,27 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado
 
 ## [Sin publicar]
 
+### La cola de trabajo, derivada del repositorio — 2026-10-29
+
+- **`scripts/next_task.sh`: la siguiente tarea, deducida del repositorio.** No hay ninguna lista de tareas escrita a mano: la cola sale de tres fuentes que no se pueden desincronizar entre sí — el orden recomendado del plan (`docs/01`), las fases **cerradas** del registro (las que tienen fecha de fin; «en curso» no es una fecha) y la nota de fase. El WP que toca es el primero cuyos AC **no** están todos en verde, y eso lo dice `scripts/check_ac.sh --machine`, que **ejecuta los tests de verdad**. Un WP está terminado cuando sus AC pasan: no hay un «hecho» escrito a mano que se pueda quedar viejo. El script sale con 0 y la tarea, o con 1 y «no queda trabajo».
+- **`scripts/check_ac.sh --machine`**: el estado de cada AC, una línea por AC (`id`, estado, ruta, nombre). Es lo que consume `next_task.sh`, que **no** reimplementa la verificación: dos lectores de la misma tabla divergen, y el que diverge se equivoca sin que se note. La salida del modo normal **no ha cambiado**: es byte a byte la de antes.
+- **`BLOQUEADA` y `PENDIENTE` se distinguen** en la salida `--machine`. Cuentan igual en el informe (los dos son AC sin cumplir), pero solo el segundo es trabajo del coder: sin esa distinción, un WP cuyo único AC pendiente depende del hardware no terminaría nunca, y el coder recibiría la misma tarea una sesión tras otra.
+- **`docs/fases/F3.md`**: la nota de fase de F3, con los AC de §19 y de §19.1 con su test, los WP con sus dependencias, las decisiones locales y los riesgos. Incluye el **AC diferido de F1** (`F1-9`), que hasta ahora no lo comprobaba nadie: `chat/2` no existe hasta F3, y ahora está escrito en la nota de F3 con su test. Diferir un AC no es cumplirlo, pero tampoco es olvidarlo.
+- **La nota de fase lleva dos tablas**, y se distinguen por el **número de celdas**, no por el nombre del identificador: un AC (`F4-12`) y un WP (`F4-12`) pueden llamarse igual. La de WP tiene tres (`WP`, `Dependencias`, `AC que cierra`) y la de AC cuatro (`#`, `AC`, `Test que lo verifica`, `En`). Una fila que no se reconoce **hace fallar el script**: es mejor que se quede sin saber qué hacer a que decida sobre un estado inventado.
+- **`scripts/lib_nota.sh`**: la lectura compartida de las tablas de fase. `check_ac.sh` y `next_task.sh` no tienen dos copias de la lógica de parseo.
+- **`probes/f3_llama_cpp.sh`**: la recogida de datos del AC **F3-14**, el único
+  AC de F3 que necesita el motor. Arranca el `llama-server` **a mano** (que es
+  justo lo que hace el modo `external`: no gestionar el engine) y le hace las
+  cuatro peticiones que hace el provider —`/v1/models`, `/v1/chat/completions`
+  en texto, con `response_format`, y `/v1/completions`—. Sin `llama-server` o
+  sin GGUF **no se hace el muerto**: dice qué falta y sale con 1. Un probe que
+  finge tener una medición es peor que no tener probe.
+- **`scripts/next_task_selftest.sh`** y `test/gunther/scripts/next_task_test.exs`: la autocomprobación de la derivación, con dobles. El selftest ejecuta el **script real** contra un repositorio de mentira (`GUNTHER_ROOT` y `GUNTHER_CHECK_AC`), no una copia de su lógica: una copia se queda vieja y el selftest acaba comprobando algo que ya no existe, con un verde falso.
+- **`scripts/check_phase.sh`** tiene una comprobación más: **la cola de trabajo se puede derivar del repositorio**. Si `next_task.sh` no da una tarea legible, la fase no se puede cerrar: el coder se quedaría parado.
+- **`PROMPT.md`: la tarea sale de un script, no del prompt.** Antes decía «escribe `docs/fases/F3.md`»: en cuanto F3 estuviera cerrada, el modelo seguiría intentando escribir una nota que ya existe. Ahora dice «ejecuta `bash scripts/next_task.sh` y haz exactamente lo que dice», y el prompt **no fija** la tarea. También desaparece el recuento de AC del estado («10 de sus 12 AC cumplidos»), que es una cifra que caduca en cuanto se cumple uno más, y `test/gunther/prompt_test.exs` lo vigila.
+- **Los dos criterios de fin, separados**: el de la **sesión** (un WP, su test en verde, `mix check.all` en verde y un commit) y el de la **fase** (la cola agotada y `check_phase.sh` en verde; **la firma es del dueño**).
+- **`AGENTS.md` y `docs/14-planificacion-del-coder.md`**: el contrato corto y el plan de traspaso, actualizados con la cola derivada. El plan ya no lleva las cifras del estado (se leen del registro y de los scripts): una cifra vieja es peor que ninguna.
+
 ### F2 en curso: recursos, y los doctests que no se ejecutaban — 2026-10-28
 
 **F2 (recursos), en curso**

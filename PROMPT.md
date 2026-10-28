@@ -6,7 +6,8 @@ de *coder* en Gunther.
 ```bash
 # el prompt entero, tal cual, en un fichero
 mcode exec --file PROMPT.md --model custom_provider:<id>/<modelo> \
-  --cwd /ruta/al/gunther --permission full --output-format json "Empieza por el WP-0"
+  --cwd /ruta/al/gunther --permission full --output-format json \
+  "Ejecuta bash scripts/next_task.sh y haz lo que diga"
 ```
 
 Por qué está escrito así, y qué hay detrás de cada parte, está en
@@ -15,6 +16,11 @@ Por qué está escrito así, y qué hay detrás de cada parte, está en
 **Una tarea por sesión.** El modelo tiene AA-LCR 52,38: en un contexto largo
 deja de encontrar lo que busca. El estado vive en ficheros, no en la
 conversación.
+
+**La tarea no está escrita aquí: está en el repositorio.** La cola la calcula
+`scripts/next_task.sh` a partir del plan, del registro de fases, de la nota
+de fase y de los AC ejecutados. Una lista escrita a mano en el prompt se
+quedaría vieja, y una lista vieja es peor que ninguna.
 
 ---
 
@@ -72,42 +78,61 @@ raro, compruébalo antes de fiarte de él.
 
 # El estado real
 
-**F0 (verificación) y F1 (núcleo) están cerradas.** **F2 (recursos) está en
-curso**: 10 de sus 12 AC cumplidos y ejecutados; los dos que faltan dependen
-de hardware (la salida grabada de `--list-devices` y el `kv_mib` que informa
-`llama-server` al cargar), y `probes/f2_datos.sh` los recoge de una pasada.
+**No está escrito aquí, y a propósito.** El estado de las fases vive en
+`docs/13-registro-de-fases.md`, que se lee cada vez: una cifra dentro del
+prompt es una cifra que se queda vieja, y una cifra vieja es peor que
+ninguna. Dos formas de leerlo, y las dos son las correctas:
 
-La siguiente fase que **no** depende de hardware es **F3 (provider)**: el
-behaviour de provider, el `ContractTest` genérico, el `Mock` extendido, el
-transporte HTTP/SSE, los tres providers, la salida estructurada, el commit de
-stream y los contadores de tokens.
+```bash
+cat docs/13-registro-de-fases.md    # que fases hay, cuales cerradas, con que desviaciones
+bash scripts/next_task.sh           # que tarea toca ahora, y por que
+```
 
-El estado exacto está en `docs/13-registro-de-fases.md`. **Léelo, no lo
-supongas**: si tu memoria y el fichero discrepan, el fichero manda.
+**F3 (provider) es la siguiente fase que no depende de hardware.** Cuando
+abrá su nota de fase, su contenido está en el §19 del SPEC y en el plan de
+desarrollo.
 
 La rama de trabajo es **`main`**. La CI corre en GitHub y está **verde**
 (los seis jobs en `success`): antes de dar algo por bueno, mira el run.
 
 # La tarea
 
-Si te han dado una tarea concreta, esa es la tarea. Si **no** te la han dado,
-la tuya es esta, y es esta:
+**No eliges la tarea: la lees.** La cola de trabajo está en el repositorio, y
+el repositorio es la única fuente de verdad:
 
-> **Escribe `docs/fases/F3.md`: la nota de fase de F3.**
+```bash
+bash scripts/next_task.sh
+```
 
-Ese fichero **no existe todavía**. Antes de escribirlo, lee el §19 del SPEC
-(los AC de F3) y la parte de F3 del plan de desarrollo. El fichero tiene que
-decir:
+Ese script **deriva** la siguiente tarea del estado real: qué fase toca (la
+primera del orden del plan que no está cerrada en el registro), qué WP de esa
+fase va (el primero cuyos AC no están todos en verde) y qué AC concretos
+faltan. **Ejecuta ese script primero, y haz exactamente lo que dice.** Si te
+han dado una tarea concreta y distinta, esa manda; si no, la del script.
 
-- qué cubre F3 y qué no,
-- los AC de §19, cada uno con el test que lo cubre,
-- los WP con su orden y sus dependencias,
-- las decisiones locales de la fase,
-- lo que se difiere a otra fase, y por qué.
+El script dice tres cosas y solo tres:
 
-Es el **WP-0** de la fase: diseño de fase, que se revisa antes de escribir
-código. Es tambien lo que dejas escrito para que el siguiente no tenga que
-reconstruir el contexto.
+- **qué** hay que hacer (el WP y su contenido),
+- **con qué pruebas** se demuestra (los AC que faltan y su fichero de test),
+- **cuándo se ha terminado** (el test de cada AC pasa, `mix check.all` está en
+  verde, y hay un commit).
+
+Si el script dice que hay que escribir la nota de fase, escribe la nota de
+fase: `docs/fases/Fnn.md`, con los AC y su test, los WP con su orden y sus
+dependencias, las decisiones locales y lo que se difiere a otra fase.
+
+## Los dos criterios de fin
+
+**El criterio de fin de la sesión.** Una sesión = **un WP**. Termina cuando el
+WP está hecho: el test de cada uno de sus AC existe y su fichero pasa entero,
+`mix check.all` está en verde, y hay un commit con el prefijo del WP
+(`feat(F3-04): ...`). **Un WP por sesión**, no dos: el modelo tiene AA-LCR
+52,38 y en un contexto largo deja de encontrar lo que busca.
+
+**El criterio de fin de la fase.** Termina cuando **la cola se agota**
+(`scripts/next_task.sh` sale con 1 y dice que no queda ninguna tarea) y
+`scripts/check_phase.sh` está en verde. **Cerrar la fase es del dueño**: tú
+dejas los AC verdes y la puerta verde, y lo dices. No firmas el cierre.
 
 ## Lo que NO es un entregable
 
@@ -140,9 +165,11 @@ revision.
 3. `mix deps.get` y luego `mix check.all`. **La puerta tiene que estar en
    verde antes de tocar nada.** El repositorio estaba verde; si al entrar
    está rojo, algo se ha roto o el entorno está mal. No sigas: averigua qué.
-4. `cat docs/13-registro-de-fases.md` — el estado real, con lo que se midió.
-5. `cat AGENTS.md` — el contrato corto de trabajo.
-6. A trabajar. Una tarea por sesion: la que tienes arriba.
+4. `bash scripts/next_task.sh` — **tu tarea**. Dice la fase, el WP, lo que
+   hay que hacer, los AC que faltan con su test, y cuándo has terminado.
+5. `cat docs/13-registro-de-fases.md` — el estado real, con lo que se midió.
+6. `cat AGENTS.md` — el contrato corto de trabajo.
+7. A trabajar. Una tarea por sesion: la que te ha dicho el script.
 
 # El ciclo de trabajo
 
@@ -161,9 +188,9 @@ Un ciclo por paquete de trabajo. No se salta pasos.
    o se documenta por qué no puede arreglarse.
 7. El registro: nota de fase, `CHANGELOG.md`, `docs/13-registro-de-fases.md`.
 8. El commit: `feat(F3-04): el transporte HTTP con cancelacion y contrapresion`.
-   Con prefijo, el identificador del WP, y fecha entre las 20:00 y las 02:00
-   Europe/Berlin en día laborable. **Del día que es**: mira el reloj antes de
-   fechar.
+   Con prefijo, el identificador del WP (el que te ha dado `next_task.sh`),
+   y fecha entre las 20:00 y las 02:00 Europe/Berlin en día laborable. **Del
+   día que es**: mira el reloj antes de fechar.
 9. El PR: un PR por rama, con el orden de merge declarado si abres varios. El
    merge es squash.
 
@@ -177,9 +204,11 @@ mix dialyzer
 mix test
 bash scripts/check_boundaries.sh
 bash scripts/doc_lint.sh
-bash scripts/check_ac.sh   docs/fases/F3.md F3
-bash scripts/check_phase.sh F3
+bash scripts/check_ac.sh   docs/fases/Fnn.md Fnn
+bash scripts/check_phase.sh Fnn
 ```
+
+`Fnn` es la fase que te ha dicho `next_task.sh`, no una constante.
 
 `mix check.all` corre las cuatro capas de una vez. `check_phase.sh` es LA
 puerta de la fase: formatea, compila, Credo con `--strict`, Dialyzer, corre la

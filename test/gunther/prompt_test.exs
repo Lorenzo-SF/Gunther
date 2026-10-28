@@ -56,7 +56,9 @@ defmodule Gunther.PromptTest do
       {"que no se cierre una fase sin el dueño", "cierre es del dueño"},
       {"que se mire la CI antes de darlo por bueno", "tiene que estar en verde"},
       {"la pregunta de fondo", "qué se hizo, por qué y cómo se comprueba"},
-      {"la tarea, en imperativo", "Escribe `docs/fases/F3.md`"},
+      {"la tarea, en imperativo, y de donde sale", "bash scripts/next_task.sh"},
+      {"que el modelo NO elija la tarea", "No eliges la tarea: la lees"},
+      {"el criterio de fin de la sesion", "criterio de fin"},
       {"que verificar NO es un entregable", "NO es un entregable"},
       {"el criterio de terminacion", "no ha producido nada"},
       {"que el SPEC no se lea entero", "No lo leas\nentero"},
@@ -82,6 +84,25 @@ defmodule Gunther.PromptTest do
 
       refute prompt =~ ~r/\d+ tests/,
              "el prompt no debe llevar el numero de tests: se lee del registro de fases"
+    end
+
+    test "una tarea fija, que se queda vieja", %{prompt: prompt} do
+      # La tarea sale de `scripts/next_task.sh`, que la deriva del
+      # repositorio. Si el prompt dijera "escribe docs/fases/F3.md", en
+      # cuanto F3 estuviera cerrada el modelo seguiria intentando escribir
+      # una nota que ya existe, y creeria que el trabajo estaba por hacer.
+      refute prompt =~ "Escribe `docs/fases/F",
+             "el prompt no fija la tarea: la cola la calcula scripts/next_task.sh"
+
+      refute prompt =~ ~r/^\*\*Escribe /m,
+             "el prompt no empieza por una tarea escrita a mano"
+    end
+
+    test "el numero de AC de una fase, que se queda viejo", %{prompt: prompt} do
+      # "10 de sus 12 AC cumplidos" es una cifra que caduca en cuanto se
+      # cumple uno mas.
+      refute prompt =~ ~r/\d+ de (?:sus |los )?\d+ AC/,
+             "el prompt no lleva el recuento de AC: se lee del registro y de check_ac.sh"
     end
 
     test "la estructura del repo, que ya esta en su documento", %{prompt: prompt} do

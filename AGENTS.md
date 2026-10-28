@@ -25,6 +25,20 @@ comportamiento está **fijado** en `SPEC-000-GUNTHER_r9.md` (SPEC vigente).
 4. **`docs/fases/Fnn.md`** — la nota de la fase en curso: AC, decisiones
    locales, desviaciones.
 
+## La tarea no la eliges: la lees
+
+```bash
+bash scripts/next_task.sh
+```
+
+Dice la fase, el WP, lo que hay que hacer, los AC que faltan con su test, y
+cuándo has terminado. **La cola se deriva del repositorio** (orden del plan,
+fases cerradas del registro, nota de fase y AC ejecutados): no hay ninguna
+lista escrita a mano, porque una lista escrita a mano se pudre en silencio.
+
+**Una sesión = un WP.** Termina cuando el test de cada AC del WP existe y su
+fichero pasa entero, `mix check.all` está en verde, y hay un commit.
+
 ## El ciclo: TDD estricto
 
 ```
@@ -62,8 +76,9 @@ bash scripts/check_phase.sh F3
 `check_phase.sh` es **la** puerta de una fase: formatea, compila, pasa Credo
 con `--strict`, pasa Dialyzer, corre la suite tres veces seguidas, comprueba
 las fronteras, el lint de documento, que el paquete se construye, que el SPEC
-no ha cambiado sin revisión, que el registro declara la fase y que **todo
-doctest del núcleo se ejecuta**.
+no ha cambiado sin revisión, que el registro declara la fase, que **todo
+doctest del núcleo se ejecuta** y que **la cola de trabajo se puede derivar
+del repositorio**.
 
 ## Las reglas que no se negocian
 
@@ -108,6 +123,8 @@ más han costado:
 - Una entrada malformada **bloquea**; no revienta.
 - Un doc que afirma lo contrario de lo que hace el código: gana el código, y
   se arregla el doc.
+- **Un prompt sin tarea y sin criterio de terminación** hace que el modelo
+  resuma en vez de trabajar: verificar no es un entregable.
 
 ## Antes de commitear
 

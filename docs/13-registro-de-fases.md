@@ -14,7 +14,7 @@ Se rellena al cerrar cada fase y cada puerta (formato en `04-f0-puertas.md`). Lo
 | **F0**  | 2026-10-27 | **2026-10-28** | 11 puertas medidas con scripts reproducibles (`probes/`) y la salida integra en `probes/output/` | Sin desviaciones | G-05, G-06 y G-17 fallan y tienen rama B aplicada |
 | **F1**  | 2026-10-28 | **2026-10-28** | Nucleo, router (las seis capas), pipeline de §2.5. 10 AC de F1 ejecutados (`scripts/check_ac.sh docs/fases/F1.md`) y 10 comprobaciones de cierre (`scripts/check_phase.sh F1`) | Sin desviaciones del SPEC; un AC diferido a F3 con razon escrita | La capa `:rule` corta cuando opino (§6.10): `:embedding` y `:llm` no corren |
 | **F2**  | 2026-10-28 | **en curso**    | Tipos de ggml, parser GGUF, formula de KV, ledger (A y B), Placer y detectores. 10 AC cumplidos y 2 pendientes (`scripts/check_ac.sh docs/fases/F2.md`); 11 comprobaciones de cierre en verde (`scripts/check_phase.sh F2`); **CI verde en `main`** (run `f836f58`, los seis jobs en `success`) | `swa_full = true` es el defecto medido de llama.cpp: la formula de SWA es exacta, no una cota. Pide revision r10 | 2 AC bloqueados por hardware (salidas reales de `--list-devices` y `kv_mib` real) |
-| **F3**  | pendiente  |                |                                                                                                                    |              |                                                                               |
+| **F3**  | 2026-10-29 |                | Nota de fase escrita (`docs/fases/F3.md`): AC de §19 y de §19.1 con su test, el AC diferido de F1 (F1-9), un AC bloqueado por hardware y los WP con sus dependencias. La cola de trabajo pasa a ser **derivada** (`scripts/next_task.sh`) | Sin desviaciones del SPEC | La nota de fase lleva **dos tablas** (WP de 3 celdas y AC de 4 celdas): las dos las lee el script de la cola, y una fila que no se reconoce hace fallar el script en vez de decidir sobre un estado inventado |
 | **F4**  | pendiente  |                |                                                                                                                    |              |                                                                               |
 | **F5**  | pendiente  |                |                                                                                                                    |              |                                                                               |
 | **F6**  | pendiente  |                |                                                                                                                    |              |                                                                               |
@@ -467,3 +467,75 @@ porque los jobs sin runner solo se ven relanzando.
 tests, 0 fallos; Credo 0; Dialyzer 0; fronteras y lint de documento en verde;
 las once comprobaciones de `scripts/check_phase.sh F2` en verde; y la CI de
 GitHub con los seis jobs en `success`.
+
+---
+
+## La cola de trabajo: derivada, no escrita a mano (2026-10-29)
+
+La primera sesion del Nemotron 3.5 Lightning como *coder* leyo el SPEC,
+exploro el repositorio, corrio todas las comprobaciones (suite, Credo,
+Dialyzer y las puertas de F1 y F2) y respondio con un resumen de ocho
+minutos. **Cero ficheros escritos.** Concluyo que la implementacion estaba
+completa.
+
+Lo que habia hecho estaba bien. El problema era que **verificar no era la
+tarea**, y la causa estaba en el prompt: describia el metodo pero no decia
+que hacer, y decia «elige una tarea». Sin un criterio de terminacion, un
+modelo optimiza por **poder contestar un resumen**, que es lo que se le da
+mejor.
+
+La leccion es transversal a cualquier agente: un prompt necesita **tarea**
+(en imperativo), **lo que no es un entregable** (dicho) y **criterio de
+terminacion** (un fichero nuevo o un commit).
+
+### La solucion: la cola esta en el repositorio
+
+`scripts/next_task.sh` dice que WP toca, y lo **deriva** de tres fuentes que
+no se pueden desincronizar entre si:
+
+1. **Que fase toca**: el orden recomendado del plan (`docs/01`) y las fases
+   **cerradas** del registro (las que tienen fecha de fin; «en curso» no es
+   una fecha).
+2. **Que WP hay**: el plan, seccion 4.
+3. **Que WP toca**: el primero cuyos AC **no** estan todos en verde, segun
+   `scripts/check_ac.sh --machine`, que **ejecuta los tests de verdad**.
+
+Una lista escrita a mano se pudre en silencio: nadie la actualiza, y el
+modelo trabaja sobre una lista que ya no describe el repositorio. Aqui la
+lista **es** el repositorio.
+
+### Lo que hace falta para que la cola se pueda derivar
+
+La nota de fase lleva **dos tablas**, y se distinguen por el **numero de
+celdas**, no por el nombre del identificador (un AC `F4-12` y un WP `F4-12`
+pueden llamarse igual):
+
+| Tabla | Celdas | Contenido |
+| ----- | ------ | --------- |
+| Los WP de la fase | 3 | `WP`, `Dependencias`, `AC que cierra` |
+| Los AC y donde se verifican | 4 | `#`, `AC`, `Test que lo verifica`, `En` |
+
+**Una fila que no se reconoce hace fallar el script.** Es mejor que se quede
+sin saber que hacer a que decida sobre un estado inventado: un checker con
+OK falso es peor que no tener checker.
+
+### El AC diferido no se pierde
+
+`F1-9` («`chat/2` sin contexto se comporta igual que antes») estaba
+diferido a F3 desde la nota de F1. Ahora esta **escrito en la nota de F3**,
+con su test, y `check_ac.sh docs/fases/F3.md F3` lo comprueba. Diferir un AC
+no es cumplirlo, pero tampoco es olvidarlo.
+
+### Dos niveles de estado
+
+`BLOQUEADA` (depende del hardware) y `PENDIENTE` (el trabajo no esta hecho)
+cuentan igual en el informe de `check_ac.sh` (los dos son AC sin cumplir), pero
+en la salida `--machine` se distinguen, porque **solo el segundo es trabajo
+del coder**. Sin esa distincion, un WP cuyo unico AC pendiente es de hardware
+no terminaria nunca, y el coder recibiria la misma tarea una sesion tras otra.
+
+### La puerta de la fase
+
+`scripts/check_phase.sh` tiene ahora una comprobacion mas: **la cola de
+trabajo se puede derivar del repositorio**. Si `next_task.sh` no da una tarea
+legible, la fase no se puede cerrar: el coder se quedaria parado.

@@ -1,6 +1,6 @@
 # Fases de diseño (DP3)
 
-Esta carpeta contiene **una nota de fase por cada fase de desarrollo** (`docs/fases/F01.md`, `F02.md`, ..., `F22.md`). Se rellena al abrir cada fase, antes de escribir código (DP3 en `docs/01-plan-de-desarrollo.md` §2).
+Esta carpeta contiene **una nota de fase por cada fase de desarrollo** (`docs/fases/F0.md`, `docs/fases/F1.md`, ..., `docs/fases/F22.md`). Se rellena al abrir cada fase, antes de escribir código (DP3 en `docs/01-plan-de-desarrollo.md` §2).
 
 ## Qué contiene una nota de fase
 
@@ -13,6 +13,51 @@ Cada `Fnn.md` debe tener, como mínimo:
 5.  **Riesgos locales** de la fase (los riesgos globales están en `SPEC §20`).
 6.  **Checklist de cierre**: qué AC del SPEC §19 tiene que estar verde para cerrar la fase.
 
+## Las dos tablas
+
+Una nota de fase lleva **dos tablas**, y se distinguen por el **número de
+celdas**, no por el nombre del identificador: un AC (`F4-12`) y un WP
+(`F4-12`) pueden llamarse igual.
+
+| Tabla | Celdas | Para qué |
+|---|---|---|
+| Los WP de la fase | **3** | Qué WP hay, de qué depende y qué AC cierra cada uno |
+| Los AC y dónde se verifican | **4** | Qué AC hay y qué test lo verifica |
+
+### La tabla de WP (3 celdas)
+
+```markdown
+| WP | Dependencias | AC que cierra |
+| --- | --- | --- |
+| F3-01 | — | F3-1, F3-2 |
+| F3-02 | F3-01 | F3-3 |
+```
+
+- El **contenido** de cada WP no se repite aquí: está en el plan de
+  desarrollo (`docs/01-plan-de-desarrollo.md` §4), que es su sitio. Copiarlo
+  aquí es tener la misma verdad en dos sitios, y las dos se separan.
+- Las **dependencias** son de WP, no de fase.
+- La columna **AC que cierra** es lo que liga el WP con sus AC: un WP está
+  terminado cuando **todos** sus AC están en verde.
+
+### La tabla de AC (4 celdas)
+
+```markdown
+| # | AC | Test que lo verifica | En |
+| --- | --- | --- | --- |
+| F3-1 | Lo que el AC exige | `test/algo_test.exs` · "el nombre del test" | F3 |
+| F3-2 | Lo que el AC exige | `test/otro_test.exs` · "el nombre del test" | BLOQUEADA |
+```
+
+- La columna **En** dice en qué fase se verifica: `Fnn`, `BLOQUEADA` (falta
+  hardware) o `PENDIENTE` (el trabajo no está hecho). **Un AC bloqueado o
+  pendiente no es un AC cumplido**: no cuenta, y la fase no se cierra.
+- La columna del test es la que ejecuta `scripts/check_ac.sh`: si el test no
+  existe, o el fichero no pasa entero, el AC **no** está cumplido.
+- Los AC que se difieren a otra fase van en esta misma tabla con esa fase en
+  la columna **En**. No hay una segunda tabla de AC: dos tablas de AC las
+  leen dos scripts y divergen.
+
 ## Plantilla
 
 Copia esta plantilla al abrir una fase:
@@ -20,21 +65,40 @@ Copia esta plantilla al abrir una fase:
 ```markdown
 # Fnn — [nombre de la fase]
 
-- **Inicio**: AAAA-MM-DD
-- **Fin**: (pendiente)
-- **SPEC**: §X, §Y, §Z
-- **Decisiones aplicables**: D-nn, D-mm
-- **Puertas F0 que la bloquean**: G-nn (deben estar PASA o BLOQUEADA con rama B aplicada)
+> Nota de fase (principio 2 del plan de desarrollo). El cierre de la fase se
+> ejecuta con `scripts/check_phase.sh Fnn` y `scripts/check_ac.sh docs/fases/Fnn.md Fnn`.
+
+**Base**: `SPEC-000-GUNTHER_r9.md` §N (los AC de la fase), §N ...
+
+**Estado: EN CURSO.** Esta nota dice **qué está hecho y qué falta**, no da la
+fase por cerrada.
 
 ## Objetivo
 
 [Qué entrega esta fase, en una frase.]
 
-## Paquetes de trabajo
+## Lo que ya está
 
-| WP     | Contenido | Dependencias | AC  |
-| ------ | --------- | ------------ | --- |
-| Fnn-01 | ...       | ...          | ... |
+| Pieza | Fichero | Qué resuelve |
+| --- | --- | --- |
+| ... | `lib/...` | ... |
+
+## Los WP de la fase
+
+| WP | Dependencias | AC que cierra |
+| --- | --- | --- |
+| Fnn-01 | — | Fnn-1 |
+| Fnn-02 | Fnn-01 | Fnn-2, Fnn-3 |
+
+## Los AC y donde se verifican
+
+Un AC esta cerrado cuando **un test lo verifica**. La columna del test es la
+que `scripts/check_ac.sh` ejecuta: si el test no existe, la fase no se cierra.
+
+| # | AC (SPEC §19, Fnn) | Test que lo verifica | En |
+| --- | --- | --- | --- |
+| Fnn-1 | ... | `test/..._test.exs` · "..." | Fnn |
+| Fnn-2 | ... | `test/..._test.exs` · "..." | BLOQUEADA |
 
 ## Decisiones locales
 
@@ -50,21 +114,41 @@ Copia esta plantilla al abrir una fase:
 
 ## Checklist de cierre
 
-- [ ] AC de Fnn en `SPEC §19` ejecutados y verdes.
+- [ ] AC de Fnn en `SPEC §19` ejecutados y verdes (`scripts/check_ac.sh docs/fases/Fnn.md Fnn`).
 - [ ] Pruebas de la fase en CI.
+- [ ] `mix check.all` en verde.
 - [ ] SPEC actualizado si hubo desviaciones.
 - [ ] Fila añadida a `docs/13-registro-de-fases.md`.
 - [ ] Tag `fNN-cerrada`.
 ```
 
+## La cola de trabajo sale de aquí
+
+`scripts/next_task.sh` **deriva** la siguiente tarea de estas tablas y del
+estado real:
+
+- la fase que toca es la primera del *orden recomendado* del plan que no
+  está cerrada en `docs/13-registro-de-fases.md`;
+- el WP que toca es el primero de esa fase cuyos AC **no** están todos en
+  verde, según `scripts/check_ac.sh --machine`, que ejecuta los tests de
+  verdad.
+
+Por eso la nota de fase tiene que estar **escrita y con las dos tablas**: sin
+la tabla de WP, la cola no sabe qué hacer; sin la tabla de AC, no sabe qué
+comprobar.
+
+Una fila que no se reconoce (un número de celdas que no es 3 ni 4) hace
+**fallar** el script: es mejor que se quede sin saber qué hacer a que
+decida sobre un estado inventado.
+
 ## Estado actual
 
-A fecha de 2026-10-26:
+A fecha de 2026-10-29:
 
 - **DP0** cerrado (`CIERRE-DP0.md`).
 - **DP1** siguiente (por qué de D-01 a D-47 en ADRs completos).
 - **DP2** pendiente (contratos en código).
-- **DP3** se abre al iniciar cada Fnn; no hay notas todavía.
+- **DP3** se abre al iniciar cada Fnn. Hay notas de F1, F2 y F3.
 - **DP4** pendiente (congelación de API antes de `1.0.0`).
 
 Las fases de desarrollo (F0 a F22) están planificadas en `docs/01-plan-de-desarrollo.md` y en `SPEC §19`. Sus notas se crean al abrirlas.
