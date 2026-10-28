@@ -82,22 +82,31 @@ todo lo que hace falta para cerrar esos dos AC: la salida del motor, los
 valores crudos del GGUF, el `kv_mib` que informa el servidor y la comparación
 con la fórmula de Gunther.
 
-### 1.3 Lo que está bloqueado y por qué
+### 1.3 Lo que estaba bloqueado, y como se resolvio
 
-**La CI de GitHub no arranca.** Todos los jobs nacen con `steps: 0`,
-`runner_name: ''` y `run_queued_at: None`, y los logs dan 404. Se comprobó que
-el commit rojo era idéntico byte a byte al verde anterior, que relanzar el run
-verde también fallaba, y que el estado de GitHub era "All Systems
-Operational": es la **cuota de minutos de Actions agotada**, no un fallo de
-código.
+**La CI de GitHub no arrancaba.** Todos los jobs nacían con `steps: 0`,
+`runner_name: ''` y `run_queued_at: None`, y los logs daban 404. Se comprobó
+que el commit rojo era idéntico byte a byte al verde anterior, que relanzar el
+run verde también fallaba, y que el estado de GitHub era "All Systems
+Operational": era la **cuota de minutos de Actions agotada** (un repo
+privado los consume), no un fallo de código.
 
-Consecuencia directa, y es la regla que el coder debe respetar:
+**La solución fue la de raíz: el repositorio pasa a público.** Un repo
+público **no consume minutos**, así que la CI volvió a funcionar sin tocar
+nada de la facturación. Antes se auditó el contenido entero (sin secretos, sin
+tokens, sin datos privados). De paso el workflow ganó `workflow_dispatch`:
+relanzar la CI a mano es justo lo que hace falta cuando el fallo es de la
+cuenta y no del código.
 
-> Mientras la CI no pueda arrancar, **no se mergea ni se cierra una fase**.
-> El trabajo se deja en una rama, con su PR abierto y su nota de fase.
+**Estado a 2026-10-28**: la CI corre y está **verde** (los seis jobs en
+`success`). La regla para el coder:
 
-Escribir código, probarlo en local y abrir el PR sí está permitido. Lo que no
-está permitido es declarar una fase cerrada.
+> El trabajo se deja en una rama, con su PR abierto y su nota de fase. El
+> **merge** es del dueño. Lo que sí puede hacer el coder es **comprobar la
+> CI** y decir si está verde.
+
+Escribir código, probarlo en local, abrir el PR y **leer el resultado de la
+CI** está permitido. Declarar una fase cerrada, no: la firma es del dueño.
 
 ---
 
@@ -502,8 +511,12 @@ son las que un modelo **no** detecta solo, porque a primera vista parecen lógic
     merge, `main` se verifica y las ramas que quedan se actualizan.
 
 14. **Una CI que no arranca no es un fallo de código.** Los jobs con
-    `steps: 0` y `runner_name: ''` son la cuenta sin permisos de ejecución.
-    Antes de culpar al código: comparar el `head_sha` con el de un run verde.
+    `steps: 0` y `runner_name: ''` son la cuenta sin permisos de ejecución
+    (minutos agotados o cargo fallido). Antes de culpar al código: comparar
+    el `head_sha` con el de un run verde. Y la solución no es esperar al
+    reset: **un repositorio público no consume minutos**. Eso se midió: con
+    el repo privado la CI no arrancaba, y al pasarlo a publico arranco y
+    salio verde a la primera.
 
 15. **`mix hex.build` con `files:` como mapa no funciona**: la lista de
     ficheros del paquete es una **lista**. El paquete publicado no lleva
@@ -526,7 +539,7 @@ Estas decisiones **son del dueño**, y el coder las propone por escrito:
 | -------- | ------------------------ |
 | Cambiar el SPEC | Una entrada en la tabla del Anexo D de la revisión siguiente (`r10`), con el porqué. No edita el SPEC. |
 | Cerrar una fase | Los AC ejecutados y verdes, la puerta en verde y la nota de fase al día. **El cierre lo hace el dueño.** |
-| Mergear un PR | El PR con su orden de merge declarado. **El merge lo hace el dueño** (y hoy, tampoco: la CI no arranca). |
+| Mergear un PR | El PR con su orden de merge declarado y **el resultado de la CI a la vista**. **El merge lo hace el dueño.** |
 | Cambiar el toolchain | Una propuesta escrita con el motivo. |
 | Publicar en hex.pm | Nunca sin permiso explícito. |
 | Tocar `arrea`, `apero` o `trebejo` | Un issue en `issues/`, justificado y planificado, como se hizo con `trebejo` y `arrea`. |

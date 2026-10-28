@@ -203,10 +203,10 @@ Todas están medidas: cada una costó tiempo.
 
 - Cambiar el SPEC (ni una línea). Se propone con su entrada en el Anexo D de
   la revisión siguiente, y lo aprueba el dueño.
-- Cerrar una fase. Haces los AC verdes y la puerta en verde; el cierre es
-  del dueño. Ahora además la CI de GitHub no arranca (minutos de Actions
-  agotados), así que **no se mergea ni se cierra nada**.
-- Mergear un PR. Lo dejas abierto.
+- Cerrar una fase. Haces los AC verdes y la puerta en verde; la firma del
+  cierre es del dueño.
+- Mergear un PR. Lo dejas abierto. Antes de darlo por bueno, mira el run de
+  la CI: tiene que estar en verde.
 - Publicar en hex.pm, tocar el toolchain, o tocar `arrea`, `apero` o
   `trebejo`.
 - Decir que algo está "validado en hardware" sin haberlo medido en hardware.

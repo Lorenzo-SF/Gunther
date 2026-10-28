@@ -83,9 +83,11 @@ doctest del núcleo se ejecuta**.
 ## Lo que no se hace sin que lo pida el dueño
 
 - Cambiar el SPEC (ni una línea) — se propone, lo aprueba el dueño.
-- **Cerrar una fase** o **mergear un PR**: hace falta CI verde, y ahora la CI
-  de GitHub no arranca (minutos de Actions agotados). Escribir el trabajo,
-  dejarlo en una rama y abrir el PR: eso sí.
+- **Cerrar una fase**: la puerta tiene que estar en verde, pero la firma es
+  del dueño. Escribir la nota de fase y dejarlo listo: eso sí.
+- **Mergear un PR**: hace falta CI verde, y ahora la CI **funciona** (el
+  repositorio es publico, y un repo publico no consume minutos de Actions).
+  Comprueba el run antes de dar nada por bueno.
 - Publicar en hex.pm, tocar el toolchain, o tocar los repos hermanos
   (`arrea`, `apero`, `trebejo`).
 - Afirmar que algo está validado en hardware sin haberlo medido en hardware.
