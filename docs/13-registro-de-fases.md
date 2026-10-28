@@ -13,7 +13,7 @@ Se rellena al cerrar cada fase y cada puerta (formato en `04-f0-puertas.md`). Lo
 | **DP4** | pendiente  |                |                                                                                                                    |              |                                                                               |
 | **F0**  | 2026-10-27 | **2026-10-28** | 11 puertas medidas con scripts reproducibles (`probes/`) y la salida integra en `probes/output/` | Sin desviaciones | G-05, G-06 y G-17 fallan y tienen rama B aplicada |
 | **F1**  | 2026-10-28 | **2026-10-28** | Nucleo, router (las seis capas), pipeline de §2.5. 10 AC de F1 ejecutados (`scripts/check_ac.sh docs/fases/F1.md`) y 10 comprobaciones de cierre (`scripts/check_phase.sh F1`) | Sin desviaciones del SPEC; un AC diferido a F3 con razon escrita | La capa `:rule` corta cuando opino (§6.10): `:embedding` y `:llm` no corren |
-| **F2**  | 2026-10-28 | **en curso**    | Tipos de ggml, parser GGUF, formula de KV, ledger (A y B), Placer y detector de `--list-devices`. 10 AC cumplidos y 2 pendientes (`scripts/check_ac.sh docs/fases/F2.md`); 11 comprobaciones de cierre en verde (`scripts/check_phase.sh F2`) | `swa_full = true` es el defecto medido de llama.cpp: la formula de SWA es exacta, no una cota. Pide revision r10 | 2 AC bloqueados por hardware (salidas reales de `--list-devices` y `kv_mib` real); `Doctor.calibrate_overhead/2` y `Detector.Cpu` ya estan |
+| **F2**  | 2026-10-28 | **en curso**    | Tipos de ggml, parser GGUF, formula de KV, ledger (A y B), Placer y detectores. 10 AC cumplidos y 2 pendientes (`scripts/check_ac.sh docs/fases/F2.md`); 11 comprobaciones de cierre en verde (`scripts/check_phase.sh F2`); **CI verde en `main`** (run `f836f58`, los seis jobs en `success`) | `swa_full = true` es el defecto medido de llama.cpp: la formula de SWA es exacta, no una cota. Pide revision r10 | 2 AC bloqueados por hardware (salidas reales de `--list-devices` y `kv_mib` real) |
 | **F3**  | pendiente  |                |                                                                                                                    |              |                                                                               |
 | **F4**  | pendiente  |                |                                                                                                                    |              |                                                                               |
 | **F5**  | pendiente  |                |                                                                                                                    |              |                                                                               |
@@ -436,3 +436,34 @@ Las dos cosas que ese proceso destaparon:
   se sirva tal cual. Cuando `least_used` y `round_robin` dependan de un
   estado que cambia, el ranking a guardar tiene que ser el previo a la
   estrategia.
+
+
+---
+
+## La CI: de muerta a verde (2026-10-28)
+
+La CI del repositorio llevaba dias **sin arrancar**: todos los jobs nacian con
+`steps: 0` y sin runner, y morian en 2-3 segundos. No era un fallo de codigo:
+el commit rojo era identico byte a byte al verde anterior, relanzar el run
+verde tambien fallaba, y el estado de GitHub era "All Systems Operational".
+
+La causa era la **cuota de minutos de Actions**, que un repositorio
+**privado** consume. Y la solucion no es esperar al reset del mes: **un
+repositorio publico no consume minutos**. El repositorio, que ya estaba
+preparado para ser publico (Apache-2.0 con `NOTICE`, `SECURITY.md`, y un
+`CONTRIBUTING.md` que no acepta PRs de terceros), paso a publico el
+2026-10-28, tras auditar el contenido: sin secretos, sin tokens, sin datos
+privados.
+
+Al pasar a publico, la CI arranco y salio **verde a la primera**. El unico
+ajuste que hizo falta fue `bandit` de 1.14.0 a 1.14.1, por el aviso HIGH
+EEF-CVE-2026-116078 (el job `audit` lo cazaba).
+
+De paso, el workflow gano `workflow_dispatch`: relanzar la CI a mano es
+justo lo que hace falta cuando el fallo es de la cuenta y no del codigo,
+porque los jobs sin runner solo se ven relanzando.
+
+**Medicion del 2026-10-28** (`f836f58`): 196 doctests, 5 properties, 413
+tests, 0 fallos; Credo 0; Dialyzer 0; fronteras y lint de documento en verde;
+las once comprobaciones de `scripts/check_phase.sh F2` en verde; y la CI de
+GitHub con los seis jobs en `success`.
