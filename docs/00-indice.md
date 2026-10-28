@@ -3,6 +3,7 @@
 | Documento                          | Para qué                                                             |
 | ---------------------------------- | -------------------------------------------------------------------- |
 | `../SPEC-000-GUNTHER_r9.md`        | Especificación completa vigente: qué se construye                    |
+| `../PROMPT.md`                    | El prompt del *coder*: rol, mapa de la documentación, método y límites |
 | `../SPEC-000-GUNTHER_r7.md`        | Revisión anterior; se conserva como histórico                        |
 | `../CIERRE-DP0.md`                 | Registro de las decisiones del dueño que cierran DP0 y abren F0      |
 | `01-plan-de-desarrollo.md`         | Fases de diseño y desarrollo, paquetes de trabajo y dependencias     |
@@ -20,7 +21,7 @@
 | `13-registro-de-fases.md`          | Registro vivo de fases y puertas                                     |
 | `14-planificacion-del-coder.md` | Plan de traspaso al modelo *coder*: estado, método, cola, trampas y criterios de revisión |
 | `16-nemotron-coder.md` | Cómo se sirve el Nemotron 3.5 Lightning para que sea el *coder*: modo de razonamiento y configuración corregida |
-| `17-prompt-del-coder.md` | El prompt que se le pasa al modelo: rol, mapa de la documentación, método, trampas y límites |
+| `17-prompt-del-coder.md` | Por qué el prompt del *coder* está escrito así (el prompt, en `../PROMPT.md`) |
 | `15-matriz-de-puertas.md`          | Resumen de las puertas F0 y sus ramas                                |
 
 **Nota sobre `docs/14`.** El hueco estaba reservado para documentos que no encajen en las categorías anteriores; lo ocupa la planificación del relevo al modelo *coder*, que es exactamente eso.
@@ -35,4 +36,4 @@
 6. `04-f0-puertas.md`.
 7. `../AGENTS.md` — el contrato de trabajo de quien toque el repositorio.
 8. `14-planificacion-del-coder.md` — el plan del relevo, si vienes a continuar.
-9. `17-prompt-del-coder.md` — el prompt, si lo que quieres es poner al día a un modelo.
+9. `../PROMPT.md` — el prompt, si lo que quieres es poner al día a un modelo.
