@@ -11,6 +11,10 @@ qué modelo y qué nodo atienden una petición, con reglas explícitas, y lleva
 la cuenta de los recursos (VRAM, KV cache) que el motor necesita. El
 comportamiento está **fijado** en `SPEC-000-GUNTHER_r9.md` (SPEC vigente).
 
+> **Aviso**: en la cuenta de GitHub hay otro repo parecido,
+> `Lorenzo-SF/candil`, que es una librería anterior y **no** es este proyecto.
+> Este es `Lorenzo-SF/Gunther`, el del SPEC.
+
 ## Lo que manda, por orden
 
 1. **`SPEC-000-GUNTHER_r9.md`** — el comportamiento. Si el código necesita algo

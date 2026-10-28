@@ -29,6 +29,20 @@ Eso impone tres cosas que este documento fija:
    asistente— al revisar el trabajo del coder son checks concretos, no
    impresiones.
 
+### 0.1 Un aviso antes de nada: hay dos proyectos con nombre parecido
+
+En la cuenta de GitHub hay **dos** repositorios que se parecen:
+
+| Repo | Qué es |
+| ---- | ------ |
+| **`Lorenzo-SF/Gunther`** | **Este.** El framework con SPEC propio (`SPEC-000-GUNTHER_r9.md`), ADRs D-01 a D-92 y las fases F0 a F22. |
+| `Lorenzo-SF/candil` | Una librería anterior de inferencia LLM: 133 módulos, MCP, RAG, gateway, agentes, mesa camilla, router de tres capas. |
+
+**No son el mismo código.** Este proyecto **no tiene** MCP, RAG, agentes ni mesa
+camilla: son fases futuras (F7, F13, F11, F12). Si una búsqueda, un `grep` o un
+recuerdo traen el otro, es ruido. Todo lo que dice este documento se refiere
+al primero.
+
 ---
 
 ## 1. El relevo: el estado real
