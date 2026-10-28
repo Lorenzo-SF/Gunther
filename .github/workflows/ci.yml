@@ -1,53 +1,123 @@
-# Plantilla de CI. Fijar las versiones del runner y de las acciones al cerrar G-01 y G-17. Las versiones de acciones y de Elixir/OTP se confirman en F0 (F0-01).
+# CI de Gunther.
+#
+# Las cuatro capas de verificacion de las convenciones del proyecto (L1
+# formato y compilacion, L2 estaticos, L3 pruebas, L4 fronteras y
+# documentos) se ejecutan como trabajos separados: un fallo en una capa no
+# tapa el de otra.
+#
+# Versiones fijadas: Elixir 1.19.1 sobre OTP 27.3 y 28.0 (las dos que el
+# proyecto soporta; ver `.tool-versions`).
 name: ci
 on:
   push: { branches: [main] }
   pull_request:
   schedule:
     - cron: "0 6 * * 1"   # semanal: trabajos weekly-*
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build-test:
+  # L1: formato y compilacion sin warnings.
+  l1-format-compile:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         otp: ["27", "28"]
-        elixir: ["1.19"]
+        elixir: ["1.19.1"]
     steps:
       - uses: actions/checkout@v4
       - uses: erlef/setup-beam@v1
-        with: { otp-version: "${{ matrix.otp }}", elixir-version: "${{ matrix.elixir }}" }
-      - run: mix deps.get
+        with:
+          otp-version: "${{ matrix.otp }}"
+          elixir-version: "${{ matrix.elixir }}"
+      - run: mix deps.get --check-locked
       - run: mix format --check-formatted
-      - run: mix compile --warnings-as-errors
-      - run: mix test
-  boundaries:
+      - run: mix compile --force --warnings-as-errors
+
+  # L2: estaticos. Credo y Dialyzer.
+  l2-static:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: erlef/setup-beam@v1
-        with: { otp-version: "28", elixir-version: "1.19" }
-      - run: mix deps.get
+        with: { otp-version: "28", elixir-version: "1.19.1" }
+      - run: mix deps.get --check-locked
+      - run: mix credo --format=oneline
+      - run: mix dialyzer
+
+  # L3: pruebas.
+  l3-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        otp: ["27", "28"]
+        elixir: ["1.19.1"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: "${{ matrix.otp }}"
+          elixir-version: "${{ matrix.elixir }}"
+      - run: mix deps.get --check-locked
+      - run: mix test
+
+  # L4: fronteras del nucleo y lint de documento.
+  l4-boundaries-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with: { otp-version: "28", elixir-version: "1.19.1" }
+      - run: mix deps.get --check-locked
       - run: mix xref graph --format stats
       - run: ./scripts/check_boundaries.sh
-  docs-lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
       - run: ./scripts/doc_lint.sh
+
+  # Auditoria de dependencias: sin vulnerabilidades conocidas.
   audit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: erlef/setup-beam@v1
-        with: { otp-version: "28", elixir-version: "1.19" }
-      - run: mix deps.get
+        with: { otp-version: "28", elixir-version: "1.19.1" }
+      - run: mix deps.get --check-locked
       - run: mix hex.audit
+
+  # El paquete se puede construir y el contenido es el esperado.
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with: { otp-version: "28", elixir-version: "1.19.1" }
+      - run: mix deps.get --check-locked
+      - run: mix hex.build
+      - run: mix hex.build --unpack -o build
+      - name: El paquete no incluye ficheros que no deben
+        run: |
+          set -euo pipefail
+          cd build
+          for f in probes _build deps .github erl_crash.dump credo-debug-log.html; do
+            if [ -e "$f" ]; then
+              echo "FALLO: el paquete contiene $f"
+              exit 1
+            fi
+          done
+          echo "OK: el paquete no contiene ficheros de desarrollo"
+
+  # Semanal: las hermanas pueden haber cambiado.
   weekly-deps:
     if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: erlef/setup-beam@v1
-        with: { otp-version: "28", elixir-version: "1.19" }
+        with: { otp-version: "28", elixir-version: "1.19.1" }
+      - run: mix deps.get
       - run: mix deps.update arrea apero trebejo
-      - run: mix test --only gate
+      # `deps.update` deja el lock modificado: si las hermanas sacaron algo
+      # incompatible, el fallo lo dice la compilacion o las pruebas.
+      - run: mix compile --force --warnings-as-errors
+      - run: mix test

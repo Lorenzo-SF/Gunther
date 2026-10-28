@@ -1,0 +1,264 @@
+== version de apero fijada
+"apero": {:hex, :apero, "4.1.0", "4ebec8664d330b23659427b5e77f5a0f9be6a84ee91234b38adacbe893b6bd3a", [:mix], [{:file_system, "~> 1.0", [hex: :file_system, repo: "hexpm", optional: false]}, {:finch, "~> 0.23", [hex: :finch, repo: "hexpm", optional: false]}, {:jason, "~> 1.4", [hex: :jason, repo: "hexpm", optional: false]}, {:toml, "~> 0.7", [hex: :toml, repo: "hexpm", optional: true]}, {:yaml_elixir, "~> 2.9", [hex: :yaml_elixir, repo: "hexpm", optional: true]}], "hexpm", "31a32bf225efdc6240d327c6e996c44fc0cf44e525fa9d845e47017ae6469c55"},
+
+== carga del ejemplo completo con Apero.Conf
+
+23:27:41.387 [debug] [Arrea.Telemetry] Metrics configured successfully
+Apero.Conf: [detect_format: 1, encode: 2, get: 2, load: 1, load: 2, merge: 1, parse: 2, print_summary: 1, print_summary: 2, set: 3, validate: 2, write: 2, write: 3]
+cargado: {:ok,
+ %{
+   "memory" => %{"max_entries" => 10000},
+   "retry" => %{
+     "attempt_timeout_ms" => 60000,
+     "base_ms" => 200,
+     "cap_ms" => 5000,
+     "max_attempts" => 3
+   },
+   "engines" => [
+     %{
+       "allowed_extra_args" => [],
+       "backend" => "cuda",
+       "command" => "llama-server",
+       "env" => %{"CUDA_VISIBLE_DEVICES" => "0"},
+       "id" => "llama_cuda",
+       "min_build" => 0
+     }
+   ],
+   "rules" => [
+     %{
+       "action" => "veto",
+       "name" => "privado",
+       "target" => %{"locality" => "cloud"},
+       "when" => %{"contains" => "privado"}
+     }
+   ],
+   "structured" => %{
+     "feedback_bytes" => 2048,
+     "max_retries" => 2,
+     "mode" => "auto"
+   },
+   "nodes" => [
+     %{
+       "client_cert_file" => "/etc/gunther/pc1.crt",
+       "client_key_file" => "/etc/gunther/pc1.key",
+       "control_timeout_ms" => 10000,
+       "heartbeat_miss_limit" => 3,
+       "heartbeat_ms" => 5000,
+       "id" => "pc2",
+       "lease_ttl_ms" => 30000,
+       "max_inflight_control" => 16,
+       "pinned_server_cert_sha256" => ["..."],
+       "url" => "https://192.168.1.20:7443"
+     }
+   ],
+   "router" => %{
+     "affinity" => "off",
+     "allow_general" => false,
+     "allow_unverified" => false,
+     "cache" => %{
+       "enabled" => true,
+       "max_entries" => 10000,
+       "ttl_seconds" => 300
+     },
+     "capture" => %{"enabled" => false, "max_entries" => 10000},
+     "classifiers" => ["router_pref"],
+     "embedding" => %{"min_similarity" => 0.0},
+     "fallback_strategy" => "least_used",
+     "llm" => "fallback",
+     "llm_timeout_ms" => 1500,
+     "llm_warm_cache" => false,
+     "max_failovers" => 2,
+     "max_in_flight" => 256,
+     "regex_match_limit" => 100000
+   },
+   "rag" => %{
+     "max_chunks_per_document" => 5000,
+     "max_document_bytes" => 10485760,
+     "rrf_k" => 60,
+     "sqlite" => %{},
+     "store" => "sqlite",
+     "store_backend" => "separate",
+     "strategy" => "hybrid",
+     "tool_enabled" => true
+   },
+   "budget" => %{"max_cost_per_request" => 0},
+   "consumers" => %{
+     "default" => %{"default_model" => "qwen_27b", "priority" => 0}
+   },
+   "mcp" => %{
+     "clients" => [
+       %{
+         "allow_private" => false,
+         "args" => [],
+         "command" => "docs-server",
+         "id" => "docs",
+         "transport" => "stdio"
+       }
+     ],
+     "compat_2025_11_25" => false,
+     "max_message_bytes" => 4194304,
+     "max_sessions" => 256,
+     "ping_interval_ms" => 60000,
+     "reconnect_attempts" => 5,
+     "rpc_timeout_ms" => 30000,
+     "session_ttl_seconds" => 900
+   },
+   "decision_models" => [
+     %{
+       "eval" => %{
+         "adversarial_corpus" => "eval/router_adv.jsonl",
+         "confidence" => 0.95,
+         "corpus" => "eval/router.jsonl",
+         "required_languages" => ["es", "en"]
+       },
+       "id" => "router_pref",
+       "kind" => "preference_router",
+       "max_input_tokens" => 2048,
+       "max_output_tokens" => 32,
+       "model" => "arch_router",
+       "require_eval" => true,
+       "resident" => true,
+       "routes" => %{
+         "code" => %{"description" => "...", "models" => ["qwen_27b"]}
+       }
+     }
+   ],
+   "stream" => %{
+     "cancel_grace_ms" => 1000,
+     "max_buffered_chunks" => 64,
+     "pre_commit_buffer_chunks" => 16
+   },
+   "engine" => %{
+     "idle_unload_seconds" => 600,
+     "log_lines" => 2000,
+     "max_restarts" => 3,
+     "port_range" => [39000, 39999],
+     "shutdown_timeout_ms" => 30000,
+     "start_timeout_ms" => 120000,
+     "vram_margin_mib" => 1024
+   },
+   "agents" => %{
+     "confirm_timeout_ms" => 3600000,
+     "max_agents" => 64,
+     "max_depth" => 3
+   },
+   "tools" => %{
+     "auto_approve" => [],
+     "default_permission_local" => "auto",
+     "default_permission_mcp" => "confirm",
+     "max_description_bytes" => 2048,
+     "max_parallel" => 4,
+     "max_result_bytes" => 65536,
+     "max_schema_bytes" => 16384,
+     "permissions" => [%{"pattern" => "_delete", "permission" => "deny"}],
+     "truncate_passes" => 32
+   },
+   "telemetry" => %{"prefix" => ["gunther"]},
+   "gunther" => %{
+     "dotenv" => false,
+     "instance_id" => "main",
+     "state_dir" => "/var/lib/gunther"
+   },
+   "providers" => %{
+     "llamacpp" => %{
+       "mode" => "managed_local",
+       "module" => "Gunther.Provider.LlamaCpp"
+     },
+     "openai" => %{
+       "api_key_env" => "OPENAI_API_KEY",
+       "base_url" => "https://api.openai.com/v1",
+       "module" => "Gunther.Provider.OpenAI",
+       "rpm" => 0,
+       "tpm" => 0
+     }
+   },
+   "models" => [
+     %{
+       "alias" => "qwen_27b",
+       "capabilities" => ["code", "reasoning"],
+       "compute_buffer_mib" => 0,
+       "context_window" => 32768,
+       "ctx_size" => 16384,
+       "engine" => "llama_cuda",
+       "exclusive" => false,
+       "fit" => "auto",
+       "kv_type_k" => "f16",
+       "kv_type_v" => "f16",
+       "locality" => "local",
+       "max_attachment_bytes" => %{"audio" => 52428800, "image" => 20971520},
+       "max_concurrency" => 4,
+       "max_output_tokens" => 4096,
+       "modalities" => ["text"],
+       "model_id" => "...",
+       "node" => "",
+       "path" => "/models/qwen.gguf",
+       "pricing" => %{
+         "input_per_mtok_micros" => 0,
+         "output_per_mtok_micros" => 0
+       },
+       "provider" => "llamacpp",
+       "resident" => false,
+       "tags" => [],
+       "vram_mb" => 0
+     }
+   ],
+   "security" => %{"persist_encrypt" => false, "persist_hmac_key_env" => ""},
+   "guardrails" => %{
+     "on_error" => "closed",
+     "pre_send" => false,
+     "stream_mode" => "buffered",
+     "timeout_ms" => 2000
+   },
+   "devices" => %{
+     "foreign_resync_threshold_mib" => 64,
+     "map" => [
+       %{
+         "backend_names" => %{"cuda" => "CUDA0", "vulkan" => "Vulkan1"},
+         "kind" => "discrete",
+         "physical_id" => "gpu0"
+       }
+     ],
+     "total_tolerance_mib" => 256
+   },
+   "cache" => %{"sweep_interval_ms" => 30000},
+   "embedders" => %{
+     "local" => %{"min_score" => 0.0, "module" => "MyApp.Embedder"}
+   },
+   "sessions" => %{
+     "idle_ttl_seconds" => 3600,
+     "max_sessions" => 1024,
+     "max_turns_in_memory" => 200,
+     "store" => "memory"
+   },
+   "context" => %{
+     "compaction" => "truncate",
+     "max_prompt_tokens" => 0,
+     "summary_model" => ""
+   },
+   "commands" => %{
+     "allow" => [
+       %{
+         "name" => "llama-server",
+         "path" => "/opt/llama.cpp/bin/llama-server",
+         "sha256" => "..."
+       }
+     ],
+     "env_allow" => ["PATH"]
+   },
+   "placement" => %{"max_loaded_models" => 0, "prefer" => ["local", "pc2"]},
+   "circuit_breaker" => %{
+     "failure_rate_threshold" => 0.5,
+     "half_open_probes" => 1,
+     "min_calls" => 10,
+     "open_duration_ms" => 30000
+   },
+   "selector" => %{"aging_step_ms" => 1000, "max_states" => 10000},
+   "refusal" => %{"policy" => "wait", "wait_ms" => 10000},
+   "gateway" => %{
+     "allow_plaintext_remote" => false,
+     "max_body_bytes" => 1048576,
+     "max_connections" => 1024,
+     "max_headers_bytes" => 16384,
+     "request_timeout_ms" => 120000
+   }
+ }}

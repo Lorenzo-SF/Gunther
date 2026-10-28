@@ -1,0 +1,2 @@
+HTTP 404 en https://hex.pm/api/packages/gunther
+RESULTADO: PASA - el nombre gunther esta libre en Hex.
