@@ -12,7 +12,7 @@ Se rellena al cerrar cada fase y cada puerta (formato en `04-f0-puertas.md`). Lo
 | **DP3** | pendiente  |                |                                                                                                                    |              |                                                                               |
 | **DP4** | pendiente  |                |                                                                                                                    |              |                                                                               |
 | **F0**  | pendiente  |                |                                                                                                                    |              |                                                                               |
-| **F1**  | pendiente  |                |                                                                                                                    |              |                                                                               |
+| **F1**  | 2026-10-28 | en marcha     | Nucleo, router (capas, precedencia, traza), pipeline de §2.5, capa `:cache`, capa `:embedding` | Sin desviaciones | La capa `:rule` corta cuando opino (§6.10): `:embedding` y `:llm` no corren |
 | **F2**  | pendiente  |                |                                                                                                                    |              |                                                                               |
 | **F3**  | pendiente  |                |                                                                                                                    |              |                                                                               |
 | **F4**  | pendiente  |                |                                                                                                                    |              |                                                                               |
@@ -329,3 +329,44 @@ Las puertas que bloquean F1 son G-01, G-05, G-07, G-16, G-17, G-21 y G-23 (`CIER
 ## Puertas que bloquean F5
 
 G-02, G-03, G-04, G-05 (`CIERRE-DP0.md` §3.5, punto 9). No bloquean F1.
+
+## F1 — Nucleo, router y resiliencia
+
+- Inicio: 2026-10-28
+- Fin: en marcha
+- AC ejecutados: `mix test` (207 tests, 17 doctests, 2 properties, 0 fallos),
+  `mix credo` (0 avisos), `mix dialyzer` (0 errores),
+  `scripts/check_boundaries.sh` (OK), `scripts/doc_lint.sh` (OK)
+- Desviaciones: ninguna
+- Decisiones nuevas:
+  - **La capa `:rule` corta cuando opino** (§6.10). Un `veto` o un `prefer`
+    que casa resuelve la capa `:rule`, y `:embedding` y `:llm` no corren. La
+    capa `:embedding` solo actua cuando no hay reglas que opinen.
+  - **El veto y el force se aplican antes de la cache** y un hit no los
+    salta: son deterministas y gratis, y un cambio de reglas cambia el hash
+    del catalogo, que es parte de la clave (§6.5).
+  - **El ranking cacheado es el final** (con la estrategia ya aplicada), para
+    que un hit se sirva tal cual. Cuando `least_used` y `round_robin` dependan
+    de un estado que cambia, el ranking a guardar tiene que ser el previo a
+    la estrategia.
+  - **Sin hash de catalogo no hay cache**: sin el no hay forma de invalidarla.
+
+### Bugs reales encontrados y corregidos
+
+1. **El hash del catalogo cubria el nombre de las reglas y no su contenido.**
+   Cambiar el `target`, la `action` o el `when` de una regla dejaba el hash
+   igual, y la cache seguia sirviendo un ranking que las reglas nuevas ya
+   habian invalidado.
+2. **`Catalog.reload/0` llamaba a un `handle_call` que no existia**: reventaba
+   en vez de recargar. Ademas, el reload no vaciaba la cache de decisiones.
+3. **`Config.Server.get/1` hacia `exit` si el servidor no estaba arrancado.**
+   Ahora devuelve `nil`: la ausencia de configuracion es un `config_error`,
+   no una excepcion.
+4. **La cache de decisiones reventaba si el proceso no estaba arrancado.**
+   Ahora un `miss` es un `miss`, no un fallo.
+
+### Lo que queda de F1
+
+- La capa `:llm` (§6.3, §6.11) y el `Provider.Mock` con su `ContractTest`
+  (§5.14), que es lo que hace falta para poder probar una capa que llama a un
+  modelo.

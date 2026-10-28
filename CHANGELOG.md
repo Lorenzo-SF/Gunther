@@ -4,6 +4,29 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado
 
 ## [Sin publicar]
 
+### F1 — capa :cache y capa :embedding — 2026-10-28
+
+**Añadido**
+
+- Capa `:cache` del router (§6.1, §6.5): lee el ranking puro de la cache de decisiones antes de las capas blandas. Lo que se cachea es el ranking, no la decision: la disponibilidad (breaker, bulkhead, ledger) se reevalua en cada peticion.
+- `Gunther.Cache.Store`: el contrato de la cache, para que la capa se pueda probar sin un proceso global. `Gunther.Cache.Decisions` lo cumple.
+- `Gunther.Router.Requirements`: la firma de requisitos (modalidades, herramientas, `response_format`, skills y `rag`) que forma parte de la clave de §6.5.
+- `Gunther.Router.Embedding`: la capa `:embedding`. Compara el prompt con las skills de los candidatos por coseno y ordena por similitud. Sin embedder registrado la capa no existe (§6.10); sin verificar no acts (§6.11) y deja el aviso `:classifier_unverified`.
+- `Gunther.Catalog.Server.reload/1`: recarga el catalogo desde la configuracion activa, conserva el snapshot anterior si la nueva no valida, y **vacia la cache de decisiones** (§6.5). `hash/1` da el hash del catalogo activo.
+
+**Fijado**
+
+- La capa `:rule` corta cuando opino (§6.10): un `veto` o un `prefer` que casa resuelve, y `:embedding` y `:llm` no corren.
+- El veto y el force se aplican antes de la cache y un hit no los salta.
+- Sin hash de catalogo no hay cache: sin el no hay forma de invalidarla.
+
+**Corregido**
+
+- El hash del catalogo cubria el nombre de las reglas y no su contenido: cambiar el `target`, la `action` o el `when` de una regla dejaba el hash igual y la cache seguia sirviendo un ranking invalidado. La huella es ahora la regla entera, canonicalizada.
+- `Catalog.reload/0` llamaba a un `handle_call` que no existia: reventaba en vez de recargar.
+- `Config.Server.get/1` hacia `exit` si el servidor no estaba arrancado. Ahora devuelve `nil`.
+- La cache de decisiones reventaba si el proceso no estaba arrancado. Ahora un `miss` es un `miss`.
+
 ### F0 y F1 — 2026-10-27
 
 Cierre de F0 (puertas medidas) y primer nucleo de F1.

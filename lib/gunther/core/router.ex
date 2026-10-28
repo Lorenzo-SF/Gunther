@@ -129,33 +129,25 @@ defmodule Gunther.Router do
         forced? ->
           resolve(after_rules, :rule, [:rule], opts, filtered, applied_consumer, applied_global)
 
-        # Un `veto` o un `prefer` no fijan el destino: restringen o ponderan.
-        # Si no hay pin, el destino lo elige la capa :rule.
-        (vetoed? or preferred?) and pin == nil ->
-          cached(after_rules, text, opts, filtered, applied_consumer, applied_global, :rule)
-
+        # El pin es eje A: gana a las capas blandas (§6.2).
         pin != nil ->
           pin_model(after_rules, pin, filtered, consumer, applied_consumer, applied_global)
 
         true ->
-          cached(after_rules, text, opts, filtered, applied_consumer, applied_global, :fallback)
+          soft_layers(after_rules, text, opts, filtered, applied_consumer, applied_global, vetoed? or preferred?)
       end
     end
   end
 
-  # La capa :cache (SPEC §6.1 y §6.5).
+  # Las capas blandas, con la cache delante (§6.1).
   #
-  # Es la primera capa por coste: una lectura de ETS. Lo que se cachea es el
-  # **ranking puro** de las capas blandas, no la decision: la disponibilidad
-  # (breaker, bulkhead, ledger) se reevalua en cada peticion.
+  # El veto y el force se aplican **antes** de mirar la cache, y un hit no
+  # los salta: son deterministas y gratis, y ademas un cambio de reglas
+  # cambia el hash del catalogo, que es parte de la clave.
   #
-  # El veto y el force se aplican **antes** de mirar la cache, y no se
-  # saltan por un hit: son deterministas y gratis, y ademas un cambio de
-  # reglas cambia el hash del catalogo, que es parte de la clave.
-  #
-  # El pin tampoco pasa por aqui: es eje A y gana a las capas blandas.
-  defp cached(candidates, text, opts, filtered, applied_consumer, applied_global, layer) do
-    case lookup(candidates, text, opts) do
+  # El pin tampoco pasa por aqui: es eje A y ya ha resuelto.
+  defp soft_layers(candidates, text, opts, filtered, applied_consumer, applied_global, rule_opined?) do
+    case lookup(text, opts) do
       {:ok, ranking} ->
         # El ranking cacheado se revalida: un alias que ya no es elegible se
         # descarta. Si no queda ninguno, el hit no vale y se recalcula.
@@ -163,10 +155,10 @@ defmodule Gunther.Router do
 
         case eligible do
           [] ->
-            compute(candidates, opts, layer, filtered, applied_consumer, applied_global, text)
+            compute_layers(candidates, text, opts, filtered, applied_consumer, applied_global, rule_opined?)
 
           _eligible ->
-            ranked = eligible |> Enum.map(& &1.alias) |> apply_strategy(strategy(opts))
+            ranked = Enum.map(eligible, & &1.alias)
             chosen = List.first(ranked)
             model = Enum.find(candidates, &(&1.alias == chosen))
 
@@ -174,29 +166,86 @@ defmodule Gunther.Router do
         end
 
       :error ->
-        compute(candidates, opts, layer, filtered, applied_consumer, applied_global, text)
+        compute_layers(candidates, text, opts, filtered, applied_consumer, applied_global, rule_opined?)
     end
   end
 
-  # Calcula la capa blanda y guarda el ranking puro para la siguiente
-  # peticion igual.
-  defp compute(candidates, opts, layer, filtered, applied_consumer, applied_global, text) do
-    result =
-      case layer do
-        :rule -> resolve(candidates, :rule, [:rule], opts, filtered, applied_consumer, applied_global)
-        :fallback -> fallback(candidates, opts, [], filtered, applied_consumer, applied_global)
+  # Las capas blandas en orden (§6.1): `:rule` si opino, `:embedding`, y
+  # `fallback` al final. Gana la primera que opina; las siguientes no se
+  # pagan (§6.2, eje B).
+  defp compute_layers(candidates, text, opts, filtered, applied_consumer, applied_global, rule_opined?) do
+    {result, ranking} =
+      if rule_opined? do
+        # La capa :rule opino: corta (§6.10).
+        {resolve(candidates, :rule, [:rule], opts, filtered, applied_consumer, applied_global),
+         apply_strategy(rank_pure(candidates, prefer_weights(opts, candidates)), strategy(opts))}
+      else
+        case embedding_layer(candidates, text, opts) do
+          {:ok, ranking} ->
+            {build_embedding(ranking, candidates, filtered, applied_consumer, applied_global), ranking}
+
+          {:skip, _reason, degraded} ->
+            {fallback(candidates, opts, [], filtered, applied_consumer, applied_global, degraded),
+             apply_strategy(rank_pure(candidates, prefer_weights(opts, candidates)), strategy(opts))}
+        end
       end
 
     with {:ok, _decision} <- result do
-      store(candidates, text, opts)
+      store(text, opts, ranking)
     end
 
     result
   end
 
+  # La capa :embedding (SPEC §6.1). Sin embedder registrado la capa no
+  # existe (§6.10) y el router sigue con el fallback.
+  defp embedding_layer(candidates, text, opts) do
+    embedder = Keyword.get(opts, :embedder)
+    embedding = Keyword.get(opts, :embedding, %{})
+
+    cond do
+      # Sin embedder registrado la capa no existe (§6.10): no es un fallo y
+      # no deja aviso.
+      embedder == nil ->
+        {:skip, :no_embedder, []}
+
+      # La capa no esta verificada (§6.11): no acts. El aviso lo dice.
+      not verified?(embedding, opts) ->
+        {:skip, :unverified, [:classifier_unverified]}
+
+      true ->
+        case Gunther.Router.Embedding.rank(candidates, text, embedder, %{
+               min_similarity: Map.get(embedding, :min_similarity, 0.0),
+               embedder_opts: Keyword.get(opts, :embedder_opts, [])
+             }) do
+          {:ok, ranking} ->
+            {:ok, ranking}
+
+          {:skip, {:embedder_error, _reason}} ->
+            {:skip, :embedder_error, [:embedding_unavailable]}
+
+          {:skip, reason} ->
+            {:skip, reason, []}
+        end
+    end
+  end
+
+  # La capa esta verificada (§6.11), o el operador permite actuar sin
+  # verificar (`router.allow_unverified`, defecto `false`).
+  defp verified?(embedding, opts) do
+    Map.get(embedding, :verified, false) or Keyword.get(opts, :allow_unverified, false)
+  end
+
+  defp build_embedding(ranking, candidates, filtered, applied_consumer, applied_global) do
+    chosen = List.first(ranking)
+    model = Enum.find(candidates, &(&1.alias == chosen))
+
+    {:ok, build(model, :embedding, [:embedding], ranking, filtered, applied_consumer, applied_global)}
+  end
+
   # La lectura de la cache. Sin hash de catalogo no se cachea: sin el no se
   # puede invalidar cuando la configuracion cambia (§6.5).
-  defp lookup(_candidates, text, opts) do
+  defp lookup(text, opts) do
     with true <- Keyword.get(opts, :cache_enabled, true),
          hash when is_binary(hash) and hash != "" <- Keyword.get(opts, :catalog_hash) do
       cache = Keyword.get(opts, :cache, Gunther.Cache.Decisions)
@@ -206,12 +255,14 @@ defmodule Gunther.Router do
     end
   end
 
-  # La escritura del ranking puro.
-  defp store(candidates, text, opts) do
+  # La escritura del ranking. Lo que se guarda es el ranking **final**: con
+  # la estrategia ya aplicada, para que un hit se sirva tal cual. Cuando
+  # `least_used` y `round_robin` dependan de un estado que cambia, el
+  # ranking a guardar tiene que ser el previo a la estrategia.
+  defp store(text, opts, ranking) do
     with true <- Keyword.get(opts, :cache_enabled, true),
          hash when is_binary(hash) and hash != "" <- Keyword.get(opts, :catalog_hash) do
       cache = Keyword.get(opts, :cache, Gunther.Cache.Decisions)
-      ranking = rank_pure(candidates, prefer_weights(opts, candidates))
       cache.put(cache_key(opts, hash, text), ranking)
     else
       _other -> :ok
@@ -247,7 +298,7 @@ defmodule Gunther.Router do
   end
 
   # La capa de fallback: el modelo normal, ordenado por `fallback_strategy`.
-  defp fallback(candidates, opts, layers_ran, filtered, applied_consumer, applied_global) do
+  defp fallback(candidates, opts, layers_ran, filtered, applied_consumer, applied_global, degraded \\ []) do
     ranked = order(candidates, strategy(opts))
 
     case ranked do
@@ -265,7 +316,8 @@ defmodule Gunther.Router do
            [chosen | rest],
            filtered,
            applied_consumer,
-           applied_global
+           applied_global,
+           degraded
          )}
     end
   end
@@ -320,7 +372,7 @@ defmodule Gunther.Router do
     {consumer_applied, global_applied}
   end
 
-  defp build(model, reason, layers_ran, ranked, filtered, applied_consumer, applied_global) do
+  defp build(model, reason, layers_ran, ranked, filtered, applied_consumer, applied_global, degraded \\ []) do
     %Decision{
       chosen: model.alias,
       provider: model.provider,
@@ -332,6 +384,7 @@ defmodule Gunther.Router do
         %{layer: List.last(layers_ran), before: length(ranked), after: length(ranked)}
       ],
       filtered: filtered,
+      degraded: degraded,
       consumer_rules_applied: applied_consumer,
       global_rules_applied: applied_global,
       trace_id: trace_id(),
