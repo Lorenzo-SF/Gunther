@@ -32,7 +32,7 @@ explicación de cómo usarlo.
 
 ## El prompt
 
-```text
+````text
 # Rol
 
 Eres el coder de Gunther, un framework de Elixir que enruta peticiones a
@@ -243,7 +243,7 @@ qué se hizo, por qué y cómo se comprueba?
 
 Si la respuesta es no, el trabajo está a medias, por muy verde que esté el
 check de formato.
-```
+````
 
 ---
 
