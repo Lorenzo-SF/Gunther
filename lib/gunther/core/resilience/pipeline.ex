@@ -78,7 +78,7 @@ defmodule Gunther.Resilience.Pipeline do
             {:error, error}
 
           # Quedan candidatos y margen de failover: se pasa al siguiente.
-          match?([_ | _], fallbacks) and
+          match?([_first | _rest], fallbacks) and
               length(used_failovers) < Keyword.get(opts, :max_failovers, 2) ->
             [_next | rest] = fallbacks
             attempt_candidates(fun, opts, rest, deadline, [:failed | used_failovers])

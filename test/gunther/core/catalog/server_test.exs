@@ -1,6 +1,7 @@
 defmodule Gunther.Catalog.ServerTest do
   use ExUnit.Case, async: false
 
+  alias Gunther.Cache.Decisions
   alias Gunther.Catalog
   alias Gunther.Catalog.Server
   alias Gunther.Config
@@ -23,12 +24,12 @@ defmodule Gunther.Catalog.ServerTest do
     catalog_server = unique(:catalog)
     cache_server = unique(:cache)
 
-    {:ok, _} = Config.Server.start_link(name: config_server, config: config(extra))
+    {:ok, _config_pid} = Config.Server.start_link(name: config_server, config: config(extra))
 
-    {:ok, _} =
-      Gunther.Cache.Decisions.start_link(name: cache_server, cache_name: unique(:cache_ets))
+    {:ok, _cache_pid} =
+      Decisions.start_link(name: cache_server, cache_name: unique(:cache_ets))
 
-    {:ok, _} =
+    {:ok, _catalog_pid} =
       Server.start_link(
         name: catalog_server,
         config_server: config_server,
@@ -51,7 +52,7 @@ defmodule Gunther.Catalog.ServerTest do
 
     test "sin configuracion activa devuelve un error, no una excepcion" do
       catalog_server = unique(:catalog)
-      {:ok, _} = Server.start_link(name: catalog_server, config_server: :no_existe)
+      {:ok, _catalog_pid} = Server.start_link(name: catalog_server, config_server: :no_existe)
 
       assert {:error, %Error{code: :config_error}} = Server.reload(catalog_server)
     end
@@ -71,12 +72,12 @@ defmodule Gunther.Catalog.ServerTest do
     test "reload/1 vacia la cache de decisiones" do
       {_config_server, catalog_server, cache_server} = start_servers(%{})
 
-      Gunther.Cache.Decisions.put(cache_server, "clave", [:a])
-      assert {:ok, [:a]} = Gunther.Cache.Decisions.get(cache_server, "clave")
+      Decisions.put(cache_server, "clave", [:a])
+      assert {:ok, [:a]} = Decisions.get(cache_server, "clave")
 
       Server.reload(catalog_server)
 
-      assert :error = Gunther.Cache.Decisions.get(cache_server, "clave")
+      assert :error = Decisions.get(cache_server, "clave")
     end
   end
 
@@ -91,7 +92,7 @@ defmodule Gunther.Catalog.ServerTest do
 
     test "sin catalogo devuelve una cadena vacia" do
       catalog_server = unique(:catalog)
-      {:ok, _} = Server.start_link(name: catalog_server)
+      {:ok, _catalog_pid} = Server.start_link(name: catalog_server)
 
       assert Server.hash(catalog_server) == ""
     end
@@ -103,7 +104,7 @@ defmodule Gunther.Catalog.ServerTest do
 
       other_config = unique(:otro_config)
 
-      {:ok, _} =
+      {:ok, _other_pid} =
         Config.Server.start_link(
           name: other_config,
           config:

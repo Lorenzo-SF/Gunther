@@ -186,7 +186,7 @@ defmodule Gunther.Router.Rules do
   defp vetoed?(model, vetoes), do: Enum.any?(vetoes, &matches?(target_of(&1), model))
 
   # Dos forces en desacuerdo se intersectan: el modelo tiene que casar con
-  # TODOS ellos, no con alguno.
+  # los dos, no con uno solo.
   defp kept_by_force?(model, forces) do
     Enum.all?(forces, &matches?(target_of(&1), model))
   end

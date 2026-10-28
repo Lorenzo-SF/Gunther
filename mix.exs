@@ -46,17 +46,24 @@ defmodule Gunther.MixProject do
     [
       name: :gunther,
       licenses: ["Apache-2.0"],
-      files: %{
-        "lib" => "lib",
-        "mix.exs" => "mix.exs",
-        "README.md" => "README.md",
-        "CHANGELOG.md" => "CHANGELOG.md",
-        "LICENSE" => "LICENSE",
-        "NOTICE" => "NOTICE",
-        "SECURITY.md" => "SECURITY.md",
-        "CONTRIBUTING.md" => "CONTRIBUTING.md",
-        "SPEC-000-GUNTHER_r8.md" => "SPEC-000-GUNTHER_r8.md"
-      },
+      # `files` es una LISTA, no un mapa: Hex la recorre con
+      # `String.contains?/2`, que recibe una lista de patrones. Con un mapa,
+      # `mix hex.build` revienta con un FunctionClauseError. La lista es
+      # explicita a proposito: el paquete lleva lo que dice y nada mas, y el
+      # trabajo `package` de CI comprueba que no se cuelan `probes/`,
+      # `_build/`, `deps/` ni `.github/`.
+      files: [
+        "lib",
+        "mix.exs",
+        "README.md",
+        "CHANGELOG.md",
+        "LICENSE",
+        "NOTICE",
+        "SECURITY.md",
+        "CONTRIBUTING.md",
+        "SPEC-000-GUNTHER_r8.md",
+        "docs"
+      ],
       links: %{
         "GitHub" => @source_url,
         "Changelog" => "#{@source_url}/blob/main/CHANGELOG.md"

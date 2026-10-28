@@ -351,6 +351,22 @@ G-02, G-03, G-04, G-05 (`CIERRE-DP0.md` §3.5, punto 9). No bloquean F1.
     la estrategia.
   - **Sin hash de catalogo no hay cache**: sin el no hay forma de invalidarla.
 
+### La CI que estaba en rojo desde el principio
+
+Los quince runs de CI hasta ahora **fallaron**, y el de `main` tambien. Dos
+motivos, y ninguno habia saltado en local:
+
+1. **`mix hex.build` reventaba.** El `files:` del paquete era un **mapa** y
+   Hex espera una **lista**: la recorre con `String.contains?/2`, que recibe
+   una lista de patrones. Con un mapa, `mix hex.build` muere con un
+   `FunctionClauseError`. Ahora `files:` es una lista explicita, y el
+   paquete lleva lo que dice y nada mas.
+2. **Credo avisaba de mas de lo que yo contaba.** La verificacion local
+   filtraba la salida por `[F]`, `[W]` y `[R]`, y se tragaba los avisos de
+   prioridad `D` y `C`. La CI cuenta todos. Eran 18: variables sin usar con
+   nombre incoherente, modulos anidados que debian aliasearse y un
+   "TODOS" en un comentario que Credo lee como un TODO.
+
 ### Bugs reales encontrados y corregidos
 
 1. **El hash del catalogo cubria el nombre de las reglas y no su contenido.**

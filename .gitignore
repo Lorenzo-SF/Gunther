@@ -15,6 +15,11 @@ credo-debug-log.html
 # construyo, y en otro host no sirve (ver el topic del sandbox).
 /priv/plts/
 
+# El paquete que construye `mix hex.build` y el directorio donde lo despliega
+# el trabajo `package` de CI.
+/build/
+*.tar
+
 # Ficheros del sistema operativo
 .DS_Store
 Thumbs.db

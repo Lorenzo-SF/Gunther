@@ -75,13 +75,13 @@ defmodule Gunther.Resilience.PipelineTest do
     end
 
     test "el error devuelto es un valor de Gunther.Error" do
-      assert {:error, error} = Pipeline.call(fn _, _ -> {:error, :timeout} end, opts(), [])
+      assert {:error, error} = Pipeline.call(fn _attempt, _budget -> {:error, :timeout} end, opts(), [])
       assert error.code == :timeout
       assert error.retryable?
     end
 
     test "un error desconocido se devuelve como :internal_error" do
-      assert {:error, error} = Pipeline.call(fn _, _ -> {:error, :inventado} end, opts(), [])
+      assert {:error, error} = Pipeline.call(fn _attempt, _budget -> {:error, :inventado} end, opts(), [])
       assert error.code == :internal_error
     end
   end
@@ -195,7 +195,7 @@ defmodule Gunther.Resilience.PipelineTest do
       end
 
       # Con un retry_after mayor que el plazo, no se reintenta: no cabe.
-      assert {:error, _} = Pipeline.call(fun, opts(timeout: 5, max_attempts: 3), [])
+      assert {:error, _reason} = Pipeline.call(fun, opts(timeout: 5, max_attempts: 3), [])
       assert :counters.get(counter, 1) == 1
     end
 
