@@ -39,7 +39,11 @@ defmodule Gunther.Router do
           consumer_rules: [Rules.rule()],
           fallback_strategy: atom(),
           model: atom() | nil,
-          pin: atom() | nil
+          pin: atom() | nil,
+          requirements: map(),
+          catalog_hash: binary(),
+          cache: module(),
+          cache_enabled: boolean()
         ]
 
   @doc """
@@ -128,15 +132,103 @@ defmodule Gunther.Router do
         # Un `veto` o un `prefer` no fijan el destino: restringen o ponderan.
         # Si no hay pin, el destino lo elige la capa :rule.
         (vetoed? or preferred?) and pin == nil ->
-          resolve(after_rules, :rule, [:rule], opts, filtered, applied_consumer, applied_global)
+          cached(after_rules, text, opts, filtered, applied_consumer, applied_global, :rule)
 
         pin != nil ->
           pin_model(after_rules, pin, filtered, consumer, applied_consumer, applied_global)
 
         true ->
-          fallback(after_rules, opts, [], filtered, applied_consumer, applied_global)
+          cached(after_rules, text, opts, filtered, applied_consumer, applied_global, :fallback)
       end
     end
+  end
+
+  # La capa :cache (SPEC §6.1 y §6.5).
+  #
+  # Es la primera capa por coste: una lectura de ETS. Lo que se cachea es el
+  # **ranking puro** de las capas blandas, no la decision: la disponibilidad
+  # (breaker, bulkhead, ledger) se reevalua en cada peticion.
+  #
+  # El veto y el force se aplican **antes** de mirar la cache, y no se
+  # saltan por un hit: son deterministas y gratis, y ademas un cambio de
+  # reglas cambia el hash del catalogo, que es parte de la clave.
+  #
+  # El pin tampoco pasa por aqui: es eje A y gana a las capas blandas.
+  defp cached(candidates, text, opts, filtered, applied_consumer, applied_global, layer) do
+    case lookup(candidates, text, opts) do
+      {:ok, ranking} ->
+        # El ranking cacheado se revalida: un alias que ya no es elegible se
+        # descarta. Si no queda ninguno, el hit no vale y se recalcula.
+        eligible = Enum.filter(candidates, &(&1.alias in ranking))
+
+        case eligible do
+          [] ->
+            compute(candidates, opts, layer, filtered, applied_consumer, applied_global, text)
+
+          _eligible ->
+            ranked = eligible |> Enum.map(& &1.alias) |> apply_strategy(strategy(opts))
+            chosen = List.first(ranked)
+            model = Enum.find(candidates, &(&1.alias == chosen))
+
+            {:ok, build(model, :cache, [:cache], ranked, filtered, applied_consumer, applied_global)}
+        end
+
+      :error ->
+        compute(candidates, opts, layer, filtered, applied_consumer, applied_global, text)
+    end
+  end
+
+  # Calcula la capa blanda y guarda el ranking puro para la siguiente
+  # peticion igual.
+  defp compute(candidates, opts, layer, filtered, applied_consumer, applied_global, text) do
+    result =
+      case layer do
+        :rule -> resolve(candidates, :rule, [:rule], opts, filtered, applied_consumer, applied_global)
+        :fallback -> fallback(candidates, opts, [], filtered, applied_consumer, applied_global)
+      end
+
+    with {:ok, _decision} <- result do
+      store(candidates, text, opts)
+    end
+
+    result
+  end
+
+  # La lectura de la cache. Sin hash de catalogo no se cachea: sin el no se
+  # puede invalidar cuando la configuracion cambia (§6.5).
+  defp lookup(_candidates, text, opts) do
+    with true <- Keyword.get(opts, :cache_enabled, true),
+         hash when is_binary(hash) and hash != "" <- Keyword.get(opts, :catalog_hash) do
+      cache = Keyword.get(opts, :cache, Gunther.Cache.Decisions)
+      cache.get(cache_key(opts, hash, text))
+    else
+      _other -> :error
+    end
+  end
+
+  # La escritura del ranking puro.
+  defp store(candidates, text, opts) do
+    with true <- Keyword.get(opts, :cache_enabled, true),
+         hash when is_binary(hash) and hash != "" <- Keyword.get(opts, :catalog_hash) do
+      cache = Keyword.get(opts, :cache, Gunther.Cache.Decisions)
+      ranking = rank_pure(candidates, prefer_weights(opts, candidates))
+      cache.put(cache_key(opts, hash, text), ranking)
+    else
+      _other -> :ok
+    end
+  end
+
+  # La clave de §6.5: {consumer, pin, force, firma de requisitos, hash del
+  # catalogo, ultimo mensaje de usuario normalizado}.
+  defp cache_key(opts, catalog_hash, text) do
+    Gunther.Cache.Decisions.key(
+      consumer: Keyword.get(opts, :consumer, :default),
+      pin: Keyword.get(opts, :model) || Keyword.get(opts, :pin),
+      force: Keyword.get(opts, :force, false),
+      requirements: Keyword.get(opts, :requirements, %{}),
+      catalog_hash: catalog_hash,
+      text: text
+    )
   end
 
   # El modelo pineado, si sigue siendo elegible. Un veto o un force pueden
@@ -156,8 +248,7 @@ defmodule Gunther.Router do
 
   # La capa de fallback: el modelo normal, ordenado por `fallback_strategy`.
   defp fallback(candidates, opts, layers_ran, filtered, applied_consumer, applied_global) do
-    strategy = Keyword.get(opts, :fallback_strategy, :least_used)
-    ranked = order(candidates, strategy)
+    ranked = order(candidates, strategy(opts))
 
     case ranked do
       [] ->
@@ -253,10 +344,21 @@ defmodule Gunther.Router do
   # por alias, de forma determinista.
   defp order(candidates, strategy, weights \\ %{}) do
     candidates
-    |> Enum.sort_by(&{-Map.get(weights, &1.alias, 0.0), &1.alias})
-    |> Enum.map(& &1.alias)
+    |> rank_pure(weights)
     |> apply_strategy(strategy)
   end
+
+  # El ranking puro: el orden que sale de las capas blandas, con el peso de
+  # las reglas `prefer` y sin la estrategia. Es lo que se cachea (§6.5): la
+  # estrategia se aplica al servir, porque `least_used` y `round_robin`
+  # dependen de un estado que cambia.
+  defp rank_pure(candidates, weights) do
+    candidates
+    |> Enum.sort_by(&{-Map.get(weights, &1.alias, 0.0), &1.alias})
+    |> Enum.map(& &1.alias)
+  end
+
+  defp strategy(opts), do: Keyword.get(opts, :fallback_strategy, :least_used)
 
   # `prefer` pondera el orden; la estrategia decide el desempate.
   defp apply_strategy(aliases, :last), do: Enum.reverse(aliases)

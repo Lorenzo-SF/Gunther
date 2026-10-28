@@ -47,10 +47,16 @@ defmodule Gunther.Config.Server do
 
   @doc """
   La configuración activa, o `nil` si aún no se ha cargado ninguna.
+
+  Si el servidor no está arrancado, tampoco hay configuración: `nil`, no una
+  excepción. Quien pregunta decide qué hacer con la ausencia.
   """
   @spec get(GenServer.server()) :: Config.t() | nil
   def get(server \\ __MODULE__) do
-    GenServer.call(server, :get)
+    case Process.whereis(server) do
+      nil -> nil
+      _pid -> GenServer.call(server, :get)
+    end
   end
 
   @doc """

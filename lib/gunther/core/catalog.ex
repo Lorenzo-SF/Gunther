@@ -126,9 +126,14 @@ defmodule Gunther.Catalog do
 
   defp config_parts(%Config{} = config) do
     [
-      config.rules |> Enum.map(& &1.name) |> Enum.sort(),
+      # El contenido de la regla, no solo su nombre: si cambia el `target`,
+      # la `action` o el `when`, el ranking cacheado ya no vale y la cache
+      # tiene que invalidarse (SPEC §6.5).
+      config.rules |> Enum.map(&fingerprint/1) |> Enum.sort(),
       config.consumers
-      |> Enum.flat_map(fn {name, consumer} -> [name | Enum.map(consumer.rules, & &1.name)] end)
+      |> Enum.flat_map(fn {name, consumer} ->
+        [name | Enum.map(consumer.rules, &fingerprint/1)]
+      end)
       |> Enum.sort(),
       config.decision_models |> Enum.map(& &1.id) |> Enum.sort()
     ]
@@ -143,4 +148,21 @@ defmodule Gunther.Catalog do
   def reload(server \\ __MODULE__) do
     GenServer.call(server, :reload)
   end
+
+  # La huella de una regla: su contenido entero, en una forma que no depende
+  # del orden de las claves. Un mapa de Erlang con menos de 32 claves es un
+  # "flatmap" y su orden es el de insercion, asi que serializarlo tal cual
+  # daria un hash distinto para el mismo contenido.
+  defp fingerprint(rule) do
+    canonical(rule)
+  end
+
+  defp canonical(value) when is_map(value) do
+    value
+    |> Enum.map(fn {key, item} -> {to_string(key), canonical(item)} end)
+    |> Enum.sort()
+  end
+
+  defp canonical(value) when is_list(value), do: Enum.map(value, &canonical/1)
+  defp canonical(value), do: value
 end

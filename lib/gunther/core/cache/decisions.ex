@@ -115,26 +115,46 @@ defmodule Gunther.Cache.Decisions do
   @doc """
   Lee un ranking cacheado.
 
+  Si la caché no está arrancada no hay nada cacheado: es un `miss`, no un
+  fallo. La capa `:cache` del router tiene que poder funcionar (sin cachear)
+  en un nodo donde nadie ha arrancado el proceso.
+
   ## Ejemplos
 
       iex> Gunther.Cache.Decisions.get("clave-inexistente")
       :error
   """
   @spec get(binary()) :: {:ok, [atom()]} | :error
-  def get(key) do
-    case Gunther.Cache.get(cache(), key) do
-      {:ok, ranking} ->
-        Bridge.router_cache_event(:cache_hit, key)
-        {:ok, ranking}
+  def get(key), do: get(__MODULE__, key)
 
-      :error ->
+  @doc """
+  Lee un ranking cacheado del servidor indicado.
+  """
+  @spec get(GenServer.server(), binary()) :: {:ok, [atom()]} | :error
+  def get(server, key) do
+    case cache(server) do
+      nil ->
         Bridge.router_cache_event(:cache_miss, key)
         :error
+
+      cache_name ->
+        case Gunther.Cache.get(cache_name, key) do
+          {:ok, ranking} ->
+            Bridge.router_cache_event(:cache_hit, key)
+            {:ok, ranking}
+
+          :error ->
+            Bridge.router_cache_event(:cache_miss, key)
+            :error
+        end
     end
   end
 
   @doc """
   Guarda un ranking.
+
+  Si la caché no está arrancada, se guarda nada y se dice lo mismo: quien
+  guarda no necesita saber si había sitio.
 
   ## Ejemplos
 
@@ -142,20 +162,42 @@ defmodule Gunther.Cache.Decisions do
       :ok
   """
   @spec put(binary(), [atom()]) :: :ok
-  def put(key, ranking) do
-    Gunther.Cache.put(cache(), key, ranking)
+  def put(key, ranking), do: put(__MODULE__, key, ranking)
+
+  @doc """
+  Guarda un ranking en el servidor indicado.
+  """
+  @spec put(GenServer.server(), binary(), [atom()]) :: :ok
+  def put(server, key, ranking) do
+    case cache(server) do
+      nil -> :ok
+      cache_name -> Gunther.Cache.put(cache_name, key, ranking)
+    end
   end
 
   @doc """
   Vacía la caché. Lo llama `Catalog.reload/0` (SPEC §6.5).
   """
   @spec clear() :: :ok
-  def clear do
-    Gunther.Cache.clear(cache())
+  def clear, do: clear(__MODULE__)
+
+  @doc """
+  Vacía la caché del servidor indicado.
+  """
+  @spec clear(GenServer.server()) :: :ok
+  def clear(server) do
+    case cache(server) do
+      nil -> :ok
+      cache_name -> Gunther.Cache.clear(cache_name)
+    end
   end
 
-  defp cache do
-    GenServer.call(__MODULE__, :cache)
+  # El nombre del proceso de la caché, o `nil` si no está arrancado.
+  defp cache(server) do
+    case Process.whereis(server) do
+      nil -> nil
+      pid -> GenServer.call(pid, :cache)
+    end
   end
 
   @impl GenServer
