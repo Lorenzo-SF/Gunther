@@ -367,6 +367,6 @@ G-02, G-03, G-04, G-05 (`CIERRE-DP0.md` §3.5, punto 9). No bloquean F1.
 
 ### Lo que queda de F1
 
-- La capa `:llm` (§6.3, §6.11) y el `Provider.Mock` con su `ContractTest`
-  (§5.14), que es lo que hace falta para poder probar una capa que llama a un
-  modelo.
+- La capa `:llm` (§6.3, §6.11), que es lo que queda para cerrar el router.
+  El `Provider.Mock` y su `ContractTest` (§5.14) ya estan: son lo que hace
+  falta para probar una capa que llama a un modelo.

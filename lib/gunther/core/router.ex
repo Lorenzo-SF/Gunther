@@ -298,7 +298,7 @@ defmodule Gunther.Router do
   end
 
   # La capa de fallback: el modelo normal, ordenado por `fallback_strategy`.
-  defp fallback(candidates, opts, layers_ran, filtered, applied_consumer, applied_global, degraded \\ []) do
+  defp fallback(candidates, opts, layers_ran, filtered, applied_consumer, applied_global, degraded) do
     ranked = order(candidates, strategy(opts))
 
     case ranked do

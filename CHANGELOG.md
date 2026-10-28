@@ -4,7 +4,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado
 
 ## [Sin publicar]
 
-### F1 — capa :cache y capa :embedding — 2026-10-28
+### F1 — capa :cache, capa :embedding y el provider de mentira — 2026-10-28
 
 **Añadido**
 
@@ -13,6 +13,8 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado
 - `Gunther.Router.Requirements`: la firma de requisitos (modalidades, herramientas, `response_format`, skills y `rag`) que forma parte de la clave de §6.5.
 - `Gunther.Router.Embedding`: la capa `:embedding`. Compara el prompt con las skills de los candidatos por coseno y ordena por similitud. Sin embedder registrado la capa no existe (§6.10); sin verificar no acts (§6.11) y deja el aviso `:classifier_unverified`.
 - `Gunther.Catalog.Server.reload/1`: recarga el catalogo desde la configuracion activa, conserva el snapshot anterior si la nueva no valida, y **vacia la cache de decisiones** (§6.5). `hash/1` da el hash del catalogo activo.
+- `Gunther.Provider.Mock`: un provider de mentira para probar el motor sin un `llama-server` delante. Es determinista, se configura por llamada (`:mock` con `:text`, `:delay_ms`, `:error` y `:usage`), rechaza las entradas malas con `{:error, :invalid_request}` en vez de lanzar, y **aborta en cuanto se cancela**, sin esperar a terminar la llamada.
+- `Gunther.ContractTest`: `use Gunther.ContractTest, behaviour: B, module: M` genera los tests que comprueban que un modulo cumple el contrato: la forma del retorno, la robustez ante una entrada mala, el determinismo y la cancelacion (§5.14). El mock se prueba con el, para que no se desvie.
 
 **Fijado**
 
