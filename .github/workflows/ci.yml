@@ -40,7 +40,7 @@ jobs:
       - uses: erlef/setup-beam@v1
         with: { otp-version: "28.5.0.7", elixir-version: "1.19.5-otp-28" }
       - run: mix deps.get --check-locked
-      - run: mix credo --format=oneline
+      - run: mix credo --strict --format=oneline
       - run: mix dialyzer
 
   # L3: pruebas.

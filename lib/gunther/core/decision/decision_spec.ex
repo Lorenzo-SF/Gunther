@@ -91,10 +91,12 @@ defmodule Gunther.DecisionSpec do
 
   ## Ejemplos
 
-      iex> Gunther.DecisionSpec.verified?(%Gunther.DecisionSpec{verification: :active})
+      iex> spec = %Gunther.DecisionSpec{id: "d1", kind: :preference_router, model: "m1", verification: :active}
+      iex> Gunther.DecisionSpec.verified?(spec)
       true
 
-      iex> Gunther.DecisionSpec.verified?(%Gunther.DecisionSpec{verification: :unverified})
+      iex> spec = %Gunther.DecisionSpec{id: "d1", kind: :preference_router, model: "m1", verification: :unverified}
+      iex> Gunther.DecisionSpec.verified?(spec)
       false
   """
   @spec verified?(t()) :: boolean()

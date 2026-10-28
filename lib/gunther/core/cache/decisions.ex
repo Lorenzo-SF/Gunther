@@ -28,8 +28,11 @@ defmodule Gunther.Cache.Decisions do
 
   ## Ejemplos
 
-      iex> Gunther.Cache.Decisions.key(consumer: :default, pin: nil, requirements: %{}, catalog_hash: "abc", text: "hola")
-      "0e2b8b3f0a1c9d2e"
+      iex> key = Gunther.Cache.Decisions.key(consumer: :default, pin: nil, requirements: %{}, catalog_hash: "abc", text: "hola")
+      iex> key == Gunther.Cache.Decisions.key(consumer: :default, pin: nil, requirements: %{}, catalog_hash: "abc", text: "hola")
+      true
+      iex> key == Gunther.Cache.Decisions.key(consumer: :default, pin: nil, requirements: %{}, catalog_hash: "abc", text: "otro")
+      false
   """
 
   use GenServer
@@ -78,8 +81,11 @@ defmodule Gunther.Cache.Decisions do
 
   ## Ejemplos
 
-      iex> Gunther.Cache.Decisions.key(consumer: :default, pin: nil, requirements: %{}, catalog_hash: "abc", text: "hola")
-      "0e2b8b3f0a1c9d2e"
+      iex> key = Gunther.Cache.Decisions.key(consumer: :default, pin: nil, requirements: %{}, catalog_hash: "abc", text: "hola")
+      iex> key == Gunther.Cache.Decisions.key(consumer: :default, pin: nil, requirements: %{}, catalog_hash: "abc", text: "hola")
+      true
+      iex> key == Gunther.Cache.Decisions.key(consumer: :default, pin: nil, requirements: %{}, catalog_hash: "abc", text: "otro")
+      false
   """
   @spec key(keyword()) :: binary()
   def key(opts) do

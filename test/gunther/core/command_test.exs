@@ -47,6 +47,22 @@ defmodule Gunther.CommandTest do
       allow = [%{name: "fantasma", path: "/no/existe/nada", sha256: nil}]
       assert {:error, %Error{code: :command_blocked}} = Command.run("fantasma", [], allow: allow)
     end
+
+    test "una entrada que es una ruta se interpreta como nombre y ruta" do
+      bin = System.fetch_env!("GUNTHER_TEST_BIN")
+
+      assert {:ok, result} = Command.run(bin, [], allow: [bin])
+      assert result.stdout =~ "hola"
+    end
+
+    test "una entrada malformada bloquea el comando, no revienta" do
+      # Una entrada que no es un mapa con nombre y ruta no se puede
+      # autorizar: se bloquea. Los errores son valores (SPEC §4.13).
+      for entrada <- [42, :atom, %{}, %{name: "x"}, %{path: "/x"}] do
+        assert {:error, %Error{code: :command_blocked}} =
+                 AllowList.resolve("cualquiera", allow: [entrada])
+      end
+    end
   end
 
   describe "argumentos" do

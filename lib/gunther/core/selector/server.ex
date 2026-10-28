@@ -67,7 +67,7 @@ defmodule Gunther.Selector.Server do
 
   ## Ejemplos
 
-      iex> Gunther.Selector.Server.get_state(:default, [:a])
+      iex> Gunther.Selector.Server.get_state(:consumer_vacio_del_doctest, [:a])
       %{}
   """
   @spec get_state(atom(), [atom()]) :: map()
@@ -86,8 +86,10 @@ defmodule Gunther.Selector.Server do
 
   ## Ejemplos
 
-      iex> Gunther.Selector.Server.put_state(:default, [:a], %{index: 1})
+      iex> Gunther.Selector.Server.put_state(:consumer_put_del_doctest, [:a], %{index: 1})
       :ok
+      iex> Gunther.Selector.Server.get_state(:consumer_put_del_doctest, [:a])
+      %{index: 1}
   """
   @spec put_state(atom(), [atom()], map()) :: :ok
   def put_state(consumer, candidates, state) do

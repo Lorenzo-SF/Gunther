@@ -1,8 +1,6 @@
 defmodule Gunther.ResponseTest do
   use ExUnit.Case, async: true
 
-  doctest Gunther.Response
-
   describe "new/1" do
     test "calcula degraded a partir de los warnings" do
       response =

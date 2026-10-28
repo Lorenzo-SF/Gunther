@@ -12,10 +12,10 @@ defmodule Gunther.Decision.Parse do
 
   ## Ejemplos
 
-      iex> Gunther.Decision.Parse.parse({:builtin, :json_route}, ~s({"route": "code"}))
+      iex> Gunther.Decision.Parse.parse({:builtin, :json_route}, nil, ~s({"route": "code"}))
       {:ok, "code"}
 
-      iex> Gunther.Decision.Parse.parse({:builtin, :json_route}, "no es json")
+      iex> Gunther.Decision.Parse.parse({:builtin, :json_route}, nil, "no es json")
       {:error, :invalid_output}
   """
 
@@ -24,7 +24,7 @@ defmodule Gunther.Decision.Parse do
 
   ## Ejemplos
 
-      iex> Gunther.Decision.Parse.parse({:builtin, :json_route}, ~s({"route": "code"}))
+      iex> Gunther.Decision.Parse.parse({:builtin, :json_route}, nil, ~s({"route": "code"}))
       {:ok, "code"}
   """
   @spec parse({:builtin, atom()} | {:module, module()}, map() | nil, binary()) ::

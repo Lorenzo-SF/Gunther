@@ -81,8 +81,9 @@ defmodule Gunther.Provider do
 
   ## Ejemplos
 
-      iex> Gunther.Provider.cost_micros(1000, 500, %{input_per_mtok_micros: 1_000_000, output_per_mtok_micros: 2_000_000})
-      2_000_000
+      iex> pricing = %{input_per_mtok_micros: 1_000_000, output_per_mtok_micros: 2_000_000}
+      iex> Gunther.Provider.cost_micros(1000, 500, pricing)
+      2000
   """
   @spec cost_micros(non_neg_integer(), non_neg_integer(), map() | nil) :: non_neg_integer()
   def cost_micros(input_tokens, output_tokens, pricing) when is_map(pricing) do

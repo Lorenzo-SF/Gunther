@@ -4,6 +4,51 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado
 
 ## [Sin publicar]
 
+### F2 en curso: recursos, y los doctests que no se ejecutaban — 2026-10-28
+
+**F2 (recursos), en curso**
+
+- `Gunther.Ggml.Type`: la tabla de tipos de ggml **medida contra `ggml-common.h`**. Los bytes por elemento se leen de la tabla, no se fijan a mano: `f32` 4, `f16` 2, `bf16` 2, `q8_0` 34/32, `q5_1` 24/32, `q5_0` 22/32, `q4_1` 20/32, `q4_0` 18/32. `q8_0` ocupa **1,0625 bytes por elemento**, la mitad que `f16`.
+- `Gunther.Gguf`: parser propio de la cabecera GGUF (v2 y v3), con metadatos de todos los tipos, arrays, infos de tensor y `tensor_bytes/1` con la aritmetica de `ggml_nbytes`.
+- `Gunther.Resource.Weight`: la formula de KV por capa, con GQA y MHA, `key_length` y `value_length` **por separado**, `type_k` y `type_v` distintos, y MLA y SSM como no aplicables.
+- `Gunther.Resource.Ledger`: reescrito con las dos convenciones de medida (A: la del motor; B: la del sistema), memoria ajena, quiescencia y congelacion, memoria unificada, `:no_room` y `:device_unusable`, `reset/0`, `resync/3` y `subscribe/2`.
+- `Gunther.Engine.Placer`: elige device con un orden explicito (`prefer`, luego local, luego mayor `available`, luego `physical_id`), margen de 1024 MiB, tope por conteo y los errores `:no_gpu`, `:no_room`, `:memory_unknown` y `:device_unusable`.
+- `Gunther.Detector.LlamaCpp` y `Gunther.Detector.Engine`: parsean la salida de `llama-server --list-devices` con el formato **medido en la fuente** (`common/arg.cpp`), y lo ejecutan por `Gunther.Command`, que es la unica puerta de ejecucion.
+- `Gunther.Detector.Cpu`: la CPU la **sintetiza** (§11.7), porque no aparece en `--list-devices` (el motor la filtra). Capacidad = memoria del sistema (`Trebejo.OS`), arquitectura, nucleos y aviso si corre como root. **No se reserva en el ledger de VRAM**: ese ledger es de las GPU.
+- `Gunther.Detector.Fabricante`: la identidad fisica que el motor no da. CUDA: el UUID de `nvidia-smi` y la atribucion por proceso (`--query-compute-apps`); ROCm: el id de `rocm-smi`. El emparejamiento con el nombre del motor lo hace la configuracion (§11.8).
+- `Gunther.Doctor.calibrate_overhead/2`: el `overhead_mib` de la convencion B se **mide**, no se supone: `max(0, total_sistema − total_motor)` del device fisico emparejado, **con su procedencia** (backend, las dos herramientas, los dos totales y el instante). Si un device no tiene pareja inequivoca, es un error: un device nunca mezcla fuentes (D-28).
+- **La CI usaba `mix credo` sin `--strict`**: el recuento de avisos salia siempre 0, igual que en los aliases. La puerta que decide si un PR entra era ciega a los avisos de prioridad baja. Ahora la CI cuenta todos los avisos, y `test/gunther/quality_gates_test.exs` vigila **el workflow tambien** (no solo los aliases): las capas que tiene, que Credo va con `--strict`, que las fronteras y el lint de documento se comprueban, y que el toolchain es el unico oficial.
+- `Gunther.Detector.Cpu` **publicaba lecturas falsas del sistema**. `Trebejo.OS` ejecuta por un shell que carga el `.bashrc`; si ese fichero no existe (contenedor, runner), el shell escribe el error en el stdout, el parseo falla y cada funcion cae a su valor por defecto: `arch` → `:unknown`, `cpu_count` → 1 (los cores del BEAM), `root?` → `false`. Los tres son plausibles, asi que nada lo delataba. Ahora la lectura es **inyectable** (`opts[:os]`), los tests del detector no dependen de la maquina, y si la lectura no es creible el device sale con `usable: false` y `reason: :memory_unknown` (y `measure/2` devuelve `{:error, :memory_unknown}` en vez de un cero). El valor falso sigue saliendo de `Trebejo.OS`: issue en `issues/trebejo-os-degrada-en-silencio.md`.
+- `docs/16-nemotron-coder.md`: como se sirve el Nemotron 3.5 Lightning para que sea el _coder_. El modo de razonamiento **decidido** (thinking ON: el modelo razona por defecto, el modo es binario, y NVIDIA pide `temperature = 0.6`), y el diagnostico de los cinco fallos de la configuracion: no se pasaba el `chat_template.jinja` (el servidor usaba el template de la comunidad, el del NANO, y el modelo no razonaba bien), `--reasoning-budget 32768` era incompatible con `--n-predict 8192` (el modelo se gastaba el presupuesto entero razonando y la respuesta final se quedaba sin sitio), `--temp 1.0` en vez de 0.6, `--keep 16384` corto para un coder y `--reasoning-preserve` inerte con este template (no declara `supports_preserve_reasoning`). Con la configuracion corregida para Metal y para CUDA, y los tres comandos para comprobar el GGUF antes de confiar en el.
+- `docs/17-prompt-del-coder.md`: el prompt para el modelo. Rol, mapa de la documentacion (que fichero se lee para que), el ciclo de TDD, las nueve comprobaciones, las reglas del repo, las diez trampas medidas, los limites de decision, como se deja el trabajo y la pregunta que lo ordena todo.
+- `AGENTS.md` y `docs/14-planificacion-del-coder.md`: el contrato de trabajo y el plan de traspaso al modelo _coder_. El estado real medido, el metodo (TDD con su ciclo de nueve pasos), las comprobaciones, la cola de trabajo (F3 primero), las diecisiete trampas medidas, los limites de decision y los criterios de revision.
+- `mix check.all` **estaba muerto**: usaba `credo --format=oneline` sin `--strict` (el recuento de avisos salia siempre 0) y no incluia L4 (fronteras y lint de documento), aunque el README decia que eran cuatro capas. Ademas `mix test` dentro del alias corria en `:dev` y no podia arrancar: `preferred_envs` lo arregla. Un test nuevo (`test/gunther/quality_gates_test.exs`) fija lo que los aliases tienen que mirar, para que no se degrade en silencio.
+- `Gunther.Engine.Placement`: el semaforo de colocacion (§11.4), **un proceso por nodo**. Serializa `resync` + `reserve` para que dos arranques concurrentes no midan la misma memoria libre; un nodo ocupado no bloquea a los demas. El turno se concede al proceso que lo pide y se ejecuta **en su propio proceso**: si ese proceso muere con el turno tomado, el semaforo lo libera (monitor) y entra el siguiente; si el que espera en la cola muere, su peticion se descarta. **No** usa `:global.trans/3`: entre varios controladores sobre un mismo nodo manda la autoridad del ledger (§18.5).
+- `probes/g10_list_devices.sh`: recoge las salidas reales de `--list-devices` (y de las herramientas del sistema) para los AC que dependen de hardware.
+
+**El `swa_full` por defecto**
+
+- El SPEC §11.5 describe la ventana deslizante como una cota. El defecto **medido** en llama.cpp (`src/llama-context.cpp:4034`) es `swa_full = true`: la ventana se aplica a **todas** las capas y la formula es **exacta**. El codigo usa el defecto real. **Esto pide una revision r10 del SPEC**, con su entrada en el Anexo D; no se toca el SPEC en silencio.
+
+**Los doctests no se ejecutaban**
+
+- De 53 modulos del nucleo con doctests, **solo 4** estaban declarados en un test: **157 doctests nunca se ejecutaron**. Y de los que si se ejecutaban, **42 estaban mal**: hashes inventados, un `kv_mib` con la aritmetica ingenua (la de `ggml_nbytes` da 131_072_000), un `cost_micros` con un factor 1000 de error, una firma de funcion que ya no existia, y cuatro que reventaban.
+- Ahora hay `test/gunther/doctests_test.exs`, que declara **todos** los doctests del nucleo (**189**, todos en verde), y `scripts/check_phase.sh` comprueba que todo modulo de `lib/` con un `iex>` esta ahi: un doctest nuevo sin declarar rompe la comprobacion. Un doctest que no se ejecuta es un doctest muerto, y parece documentacion verificada.
+- Los doctests con estado global (el registro, el selector, la memoria) usan ahora su propio `consumer`, para que el resultado no dependa del orden de los tests.
+
+**Corregido (bugs reales, ninguno cubierto por tests)**
+
+- **La memoria no escribia nunca.** `Gunther.Memory.Server` tenia las dos ramas de `put/3` **invertidas**: sin `:if_version` comparaba la version actual contra `nil` (siempre distinto) y devolvia `version_conflict` **siempre**; con `:if_version` escribia sin comprobar nada. `put` no escribia, ni la primera vez. No habia ningun test de `if_version`.
+- **Las claves de un ambito se filtraban a los demas.** `keys/1` quitaba el prefijo con `String.replace_prefix/3` sobre todas las claves de la tabla: las de otro ambito salian con el prefijo de otro consumidor dentro.
+- **`Process.sleep/1` con un valor negativo.** En `Gunther.Resilience.Pipeline`, el backoff se limitaba por `min(capped, remaining)` y `remaining` puede ser negativo si el plazo se agota entre el intento y el calculo: se esperaba una cantidad negativa y reventaba. Intermitente, porque solo pasaba cuando el reloj caia en esa ventana.
+- **La lista de permitidos reventaba con una entrada malformada.** `Gunther.Command.AllowList.resolve/2` hacia `entry[:name]` sobre la entrada: si no era un mapa, era `FunctionClauseError` en vez de `:command_blocked`. Ahora una ruta se acepta como nombre y ruta, y cualquier otra forma bloquea.
+- **El router y el Placer reventaban con datos mal formados.** `Gunther.Router` accedia a `model.node` y `Gunther.Engine.Placer` a `model.device` directamente: un modelo incompleto era un `KeyError` o un `FunctionClauseError`, no un error.
+
+**El cierre de una fase, mas fuerte**
+
+- `scripts/check_phase.sh` tiene una comprobacion nueva: **todo doctest del nucleo se ejecuta**. Y `scripts/check_ac.sh` distingue los AC **bloqueados** (falta el hardware) y **pendientes** (el trabajo no esta hecho) de los **cumplidos**: un AC bloqueado no es un AC cumplido, y la fase no se cierra.
+- El selftest del checker ya no fija el numero de comprobaciones: lo **deriva** de la salida. La misma verdad en dos sitios siempre diverge.
+
 ### Correcciones editoriales y de licencia — 2026-10-28
 
 Correcciones solicitadas por el dueño, sin cambio de comportamiento (SPEC Anexo D.5, E-01 a E-06):

@@ -103,6 +103,22 @@ defmodule Gunther.Resilience.PipelineTest do
       assert :counters.get(counter, 1) >= 1
     end
 
+    test "un intento que consume el plazo no espera en negativo" do
+      # El intento se pasa el plazo. Al calcular el backoff, lo que queda es
+      # negativo: el backoff se limita por lo que queda, asi que saldria
+      # negativo, y `Process.sleep/1` con un negativo revienta. Lo que
+      # procede es devolver el error sin reintentar.
+      fun = fn _attempt, _budget ->
+        Process.sleep(30)
+        {:error, :timeout}
+      end
+
+      resultado = Pipeline.call(fun, opts(timeout: 5, attempt_timeout_ms: 1_000, base_ms: 200), [])
+
+      assert {:error, error} = resultado
+      assert error.code == :timeout
+    end
+
     test "un plazo ya agotado no hace ni un intento" do
       counter = :counters.new(1, [:atomics])
 

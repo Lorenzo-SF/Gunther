@@ -22,20 +22,30 @@ defmodule Gunther.Detector do
       false
   """
 
+  # El mapa es **exacto**: las claves base estan todas, y las especificas de
+  # un detector son `optional`. El detector de la CPU, por ejemplo, lleva
+  # `arch`, `cpu_count` y `root?` (§11.7).
   @type device :: %{
-          physical_id: binary(),
-          name: binary(),
-          backend: :cuda | :vulkan | :rocm | :metal | :cpu,
-          backend_name: binary(),
-          kind: :discrete | :unified,
-          capacity_mib: non_neg_integer(),
-          free_mib: non_neg_integer() | nil,
-          usable: boolean(),
-          reason: atom() | nil
+          required(:physical_id) => binary(),
+          required(:name) => binary(),
+          required(:backend) => :cuda | :vulkan | :rocm | :metal | :cpu,
+          required(:backend_name) => binary(),
+          required(:kind) => :discrete | :unified,
+          required(:capacity_mib) => non_neg_integer(),
+          required(:free_mib) => non_neg_integer() | nil,
+          required(:usable) => boolean(),
+          required(:reason) => atom() | nil,
+          optional(:description) => binary() | nil,
+          optional(:index) => non_neg_integer() | nil,
+          optional(:attribution) => :per_process | :none | nil,
+          optional(:reservable) => boolean() | nil,
+          optional(:arch) => atom() | nil,
+          optional(:cpu_count) => pos_integer() | nil,
+          optional(:root?) => boolean() | nil
         }
 
   @callback devices(opts :: keyword()) :: {:ok, [device()]} | {:error, term()}
-  @callback measure(physical_id :: binary()) ::
+  @callback measure(physical_id :: binary(), opts :: keyword()) ::
               {:ok,
                %{
                  total_mib: non_neg_integer(),

@@ -140,8 +140,9 @@ defmodule Gunther.DecisionView do
 
   ## Ejemplos
 
-      iex> Gunther.DecisionView.from_messages([%{role: :user, content: "hola"}], [:user]).source_hash
-      "a948904f2f0f479b8"
+      iex> view = Gunther.DecisionView.from_messages([%{role: :user, content: "hola"}], [:user])
+      iex> view.source_hash == Gunther.DecisionView.hash("hola")
+      true
   """
   @spec hash(binary()) :: binary()
   def hash(text) do

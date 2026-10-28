@@ -14,7 +14,8 @@ defmodule Gunther.Supervisor do
   ├── Tools.Server           tabla única de tools
   ├── Resilience.Supervisor  breakers, bulkheads y rate limiters por provider y modelo
   ├── Resource.Ledger        ledger de recursos (D-48), indexado por physical_id (D-65)
-  ├── Placement              semáforos de colocación, uno por nodo (§11.4)
+  ├── Placement.Registry      direcciona el semáforo de colocación por nodo (§11.4)
+  ├── Placement.Supervisor    semáforos de colocación, uno por nodo (§11.4)
   ├── Node.Supervisor        DynamicSupervisor: una conexión por nodo remoto (§18)
   ├── Engine.Supervisor      DynamicSupervisor: un engine por modelo cargado
   ├── Session.Supervisor     DynamicSupervisor
@@ -57,6 +58,11 @@ defmodule Gunther.Supervisor do
       # F2
       Gunther.Resource.Ledger,
       Gunther.Placement,
+      # El semaforo de colocacion (§11.4) es un proceso por nodo: el
+      # `Registry` direcciona por nodo y el `DynamicSupervisor` los arranca
+      # bajo demanda, porque los nodos no se conocen de antemano.
+      {Registry, keys: :unique, name: Gunther.Engine.Placement.Registry},
+      Gunther.Engine.Placement.Supervisor,
       # F15
       {DynamicSupervisor, name: Gunther.Node.Supervisor, strategy: :one_for_one},
       # F6

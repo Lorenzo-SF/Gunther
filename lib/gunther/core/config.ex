@@ -295,7 +295,7 @@ defmodule Gunther.Config do
 
   ## Ejemplos
 
-      iex> {:ok, config} = Gunther.Config.load(%{gunther: %{instance_id: "main"}})
+      iex> {:ok, config} = Gunther.Config.load(%{"gunther" => %{"instance_id" => "main"}})
       iex> config.gunther.instance_id
       "main"
   """

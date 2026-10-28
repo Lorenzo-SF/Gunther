@@ -1,8 +1,6 @@
 defmodule Gunther.ErrorTest do
   use ExUnit.Case, async: true
 
-  doctest Gunther.Error
-
   describe "new/3" do
     test "el retryable por defecto sale de la tabla de §4.13" do
       assert %Gunther.Error{retryable?: true} = Gunther.Error.new(:overloaded, "x")

@@ -20,6 +20,10 @@ credo-debug-log.html
 /build/
 *.tar
 
+# El log del servidor que arranca `probes/f2_datos.sh`: pesa y no es
+# evidencia (la evidencia es el resumen que imprime).
+/probes/output/*.log
+
 # Ficheros del sistema operativo
 .DS_Store
 Thumbs.db

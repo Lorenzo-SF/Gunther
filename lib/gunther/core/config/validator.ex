@@ -43,7 +43,7 @@ defmodule Gunther.Config.Validator do
 
   ## Ejemplos
 
-      iex> {:ok, config} = Gunther.Config.Validator.validate(%{gunther: %{instance_id: "main"}})
+      iex> {:ok, config} = Gunther.Config.Validator.validate(%{"gunther" => %{"instance_id" => "main"}})
       iex> config.router.fallback_strategy
       :least_used
   """
