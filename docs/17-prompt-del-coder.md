@@ -81,6 +81,42 @@ bloqueada con el resto del trabajo hecho es un entregable, no un problema.
 La misma lógica con el CI: el prompt no dice "no merges nunca", dice "mira el
 run: tiene que estar en verde". Una puerta se comprueba; no se da por hecha.
 
+## Por qué el prompt dice la tarea y dice cuándo se ha terminado
+
+La primera versión del prompt falló en esto, y de una forma que solo se ve
+con la sesión delante: el Nemotron leyo el prompt, exploro el repositorio,
+corrio **todas** las comprobaciones, y respondio con un resumen de ocho
+minutos. **Cero ficheros escritos.** Su conclusion fue "the implementation is
+complete and all acceptance criteria for F1 have been verified and closed".
+
+Lo que habia hecho estaba bien: las comprobaciones eran las de verdad (420
+tests, Credo 0, Dialyzer 0, `check_phase F1` y `F2` en verde) y las cifras
+coincidian con las medidas. El problema es que **eso no era la tarea**.
+
+Por que: el prompt describia el *metodo* (el ciclo de TDD, las comprobaciones,
+las trampas) pero no decia **que hacer**, y decia "elige una tarea". "Elige"
+es opcional. Y como "verificar" estaba en la lista de cosas que hacer, verificar
+le parecio un trabajo terminado. Sin un criterio de terminacion, un agente
+optimiza por **poder contestar un resumen**, que es lo que se le da mejor.
+
+Los tres arreglo:
+
+1. **La tarea, en imperativo.** Si no te la dan, la tuya es "escribe
+   `docs/fases/F3.md`". No "elige": escribe. Y con el contenido minimo que
+   tiene que tener.
+2. **Lo que NO es un entregable**, dicho explicitly: leer el SPEC, correr los
+   checks y resumir es el punto de partida, no el resultado. "Lo he
+   verificado y esta todo verde" no es un resumen del trabajo.
+3. **El criterio de terminacion**: al terminar la sesion hay un **fichero
+   nuevo o un commit**. Si no hay ninguna de las dos cosas, la sesion no ha
+   producido nada.
+
+Y una cuarta cosa, que no es de redaccion sino de rendimiento: el prompt dice
+que el SPEC r9 son 3271 lineas (112 000 tokens) y que **no se lea entero**,
+y que r7 y r8 son historicos. En la sesion que fallo, el modelo se comio el
+SPEC en varias lecturas: con AA-LCR 52,38, leer
+112 000 tokens de SPEC es justo como se pierde el hilo.
+
 ## La pregunta del final
 
 El prompt acaba con:

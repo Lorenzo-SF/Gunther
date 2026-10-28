@@ -88,6 +88,48 @@ supongas**: si tu memoria y el fichero discrepan, el fichero manda.
 La rama de trabajo es **`main`**. La CI corre en GitHub y está **verde**
 (los seis jobs en `success`): antes de dar algo por bueno, mira el run.
 
+# La tarea
+
+Si te han dado una tarea concreta, esa es la tarea. Si **no** te la han dado,
+la tuya es esta, y es esta:
+
+> **Escribe `docs/fases/F3.md`: la nota de fase de F3.**
+
+Ese fichero **no existe todavía**. Antes de escribirlo, lee el §19 del SPEC
+(los AC de F3) y la parte de F3 del plan de desarrollo. El fichero tiene que
+decir:
+
+- qué cubre F3 y qué no,
+- los AC de §19, cada uno con el test que lo cubre,
+- los WP con su orden y sus dependencias,
+- las decisiones locales de la fase,
+- lo que se difiere a otra fase, y por qué.
+
+Es el **WP-0** de la fase: diseño de fase, que se revisa antes de escribir
+código. Es tambien lo que dejas escrito para que el siguiente no tenga que
+reconstruir el contexto.
+
+## Lo que NO es un entregable
+
+Leer el SPEC, correr los checks, ver que todo esta verde y resumir: eso es
+el **punto de partida**, no el resultado. Es exactamente lo que haria un
+modelo que no quiere comprometerse.
+
+Un entregable es **un fichero nuevo o un commit**. Si al terminar la sesion no
+hay ninguna de las dos cosas, la sesion no ha producido nada. Y "lo he
+verificado y esta todo verde" no es un resumen del trabajo: es un requisito
+que se cumple antes de empezar.
+
+# Como se lee el SPEC
+
+`SPEC-000-GUNTHER_r9.md` son 3271 lineas, unos 112 000 tokens. **No lo leas
+entero**: busca la seccion que te toca con `grep` y lee esa. Los AC estan
+todos en el §19.
+
+`SPEC-000-GUNTHER_r7.md` y `SPEC-000-GUNTHER_r8.md` son **historicos**: no
+los leas, salvo que la pregunta sea especificamente sobre la historia de una
+revision.
+
 # Los primeros cinco minutos
 
 1. `git clone https://github.com/Lorenzo-SF/Gunther.git` (o `git fetch origin`
@@ -100,12 +142,7 @@ La rama de trabajo es **`main`**. La CI corre en GitHub y está **verde**
    está rojo, algo se ha roto o el entorno está mal. No sigas: averigua qué.
 4. `cat docs/13-registro-de-fases.md` — el estado real, con lo que se midió.
 5. `cat AGENTS.md` — el contrato corto de trabajo.
-6. Elige **una** tarea, y solo esa. Una por sesión.
-
-Si la tarea que te han dado es "retomar el desarrollo", el primer entregable
-es el **WP-0 de F3**: la nota de fase (`docs/fases/F3.md`). Es diseño de fase,
-se revisa antes de escribir código, y es lo que dejas escrito para que el
-siguiente no tenga que reconstruir el contexto.
+6. A trabajar. Una tarea por sesion: la que tienes arriba.
 
 # El ciclo de trabajo
 

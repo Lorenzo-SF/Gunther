@@ -55,7 +55,12 @@ defmodule Gunther.PromptTest do
       {"los límites de decisión", "Lo que NO decides tú"},
       {"que no se cierre una fase sin el dueño", "cierre es del dueño"},
       {"que se mire la CI antes de darlo por bueno", "tiene que estar en verde"},
-      {"la pregunta de fondo", "qué se hizo, por qué y cómo se comprueba"}
+      {"la pregunta de fondo", "qué se hizo, por qué y cómo se comprueba"},
+      {"la tarea, en imperativo", "Escribe `docs/fases/F3.md`"},
+      {"que verificar NO es un entregable", "NO es un entregable"},
+      {"el criterio de terminacion", "no ha producido nada"},
+      {"que el SPEC no se lea entero", "No lo leas\nentero"},
+      {"que los SPEC historicos se ahorren", "son **historicos**"}
     ]
 
     test "el prompt incluye todas las piezas obligatorias", %{prompt: prompt} do
@@ -91,10 +96,25 @@ defmodule Gunther.PromptTest do
     end
 
     test "el numero de version de otra revision del SPEC", %{prompt: prompt} do
-      # El SPEC vigente es el r9. Si el prompt dice r8, el modelo trabaja
-      # contra el historico.
-      refute prompt =~ "SPEC-000-GUNTHER_r8.md"
-      refute prompt =~ "SPEC-000-GUNTHER_r7.md"
+      # El SPEC vigente es el r9. Los historicos (r7 y r8) se nombran **una
+      # vez y solo** para decir que no se lean: si aparecen en otra parte (el
+      # mapa, el estado), el modelo puede trabajar contra el historico.
+      for revision <- ["SPEC-000-GUNTHER_r8.md", "SPEC-000-GUNTHER_r7.md"] do
+        menciones = length(String.split(prompt, revision)) - 1
+
+        assert menciones == 1,
+               "#{revision} aparece #{menciones} veces: solo puede aparecer en la frase que la descarta"
+      end
+    end
+  end
+
+  describe "el prompt no puede quedarse viejo" do
+    test "no lleva el numero de lineas del SPEC si no es para advertir de su tamano", %{
+      prompt: prompt
+    } do
+      # El tamano del SPEC SI puede estar: es lo que justifica "no lo leas
+      # entero". Lo que no puede estar es el estado.
+      assert prompt =~ "3271 lineas"
     end
   end
 
