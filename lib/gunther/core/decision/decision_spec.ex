@@ -32,7 +32,10 @@ defmodule Gunther.DecisionSpec do
           prompt: {:builtin, atom()} | {:module, module()},
           parse: {:builtin, atom()} | {:module, module()},
           require_eval: boolean(),
-          eval: map()
+          eval: map(),
+          verification: :unverified | :active | :failed,
+          report_id: binary() | nil,
+          max_concurrency: pos_integer()
         }
 
   @enforce_keys [:id, :kind, :model]
@@ -56,18 +59,44 @@ defmodule Gunther.DecisionSpec do
             prompt: {:builtin, :preference_router},
             parse: {:builtin, :json_route},
             require_eval: true,
-            eval: %{}
+            eval: %{},
+            verification: :unverified,
+            report_id: nil,
+            max_concurrency: 1
 
   @doc """
   Construye un `DecisionSpec` con los defectos de §6.11.
+
+  ## El estado de verificacion
+
+  `:unverified` es el estado de partida: un modelo de decision no acts hasta
+  que hay un informe de evaluacion que lo verifique (§6.11). `:active` es
+  verificado, `:failed` es que el informe no cumple los umbrales.
 
   ## Ejemplos
 
       iex> Gunther.DecisionSpec.new(%{id: :x, kind: :general_llm, model: :m}).temperature
       0.0
   """
-  @spec new(map()) :: t()
-  def new(attrs) do
-    struct!(__MODULE__, attrs)
+  @spec new(map() | keyword()) :: t()
+  def new(attrs) when is_map(attrs) or is_list(attrs) do
+    struct!(__MODULE__, Map.new(attrs))
   end
+
+  @doc """
+  Si el modelo de decision puede actuar (§6.11).
+
+  Solo un modelo `:active` actua, salvo que el operador admita actuar sin
+  verificar (`router.allow_unverified`).
+
+  ## Ejemplos
+
+      iex> Gunther.DecisionSpec.verified?(%Gunther.DecisionSpec{verification: :active})
+      true
+
+      iex> Gunther.DecisionSpec.verified?(%Gunther.DecisionSpec{verification: :unverified})
+      false
+  """
+  @spec verified?(t()) :: boolean()
+  def verified?(%__MODULE__{verification: verification}), do: verification == :active
 end

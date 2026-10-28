@@ -25,7 +25,7 @@ defmodule Gunther.Decision do
           candidates_per_layer: [%{layer: layer(), before: non_neg_integer(), after: non_neg_integer()}],
           filtered: [%{model: atom(), reason: atom()}],
           degraded: [atom()],
-          decision_model: %{id: atom(), kind: atom(), report_id: binary()} | nil,
+          decision_model: %{id: atom(), kind: atom(), report_id: binary() | nil} | nil,
           affinity: %{model: atom(), applied: boolean()} | nil,
           consumer_rules_applied: [atom()],
           global_rules_applied: [atom()],

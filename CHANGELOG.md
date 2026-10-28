@@ -4,7 +4,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado
 
 ## [Sin publicar]
 
-### F1 — capa :cache, capa :embedding y el provider de mentira — 2026-10-28
+### F1 — las seis capas del router, el provider de mentira y el contrato — 2026-10-28
 
 **Añadido**
 
@@ -16,9 +16,17 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado
 - `Gunther.Provider.Mock`: un provider de mentira para probar el motor sin un `llama-server` delante. Es determinista, se configura por llamada (`:mock` con `:text`, `:delay_ms`, `:error` y `:usage`), rechaza las entradas malas con `{:error, :invalid_request}` en vez de lanzar, y **aborta en cuanto se cancela**, sin esperar a terminar la llamada.
 - `Gunther.ContractTest`: `use Gunther.ContractTest, behaviour: B, module: M` genera los tests que comprueban que un modulo cumple el contrato: la forma del retorno, la robustez ante una entrada mala, el determinismo y la cancelacion (§5.14). El mock se prueba con el, para que no se desvie.
 
+- Capa `:llm` del router (§6.1, §6.3, §6.11, §6.12): la ultima capa blanda, la que llama a un **modelo de decision especializado**. `router.llm` decide si la capa existe: `never` la quita, `fallback` (defecto) la deja correr solo si las baratas no resolvieron, `always` la corre siempre.
+- `Gunther.Decision.Prompt` y `Gunther.Decision.Parse`: la plantilla de la peticion y el interprete de la salida, los dos **personalizables** (D-72). La plantilla incorporada pone el prefijo estatico (las rutas) primero y el texto del usuario al final, para que la cache de prompt del servidor sirva.
+- `Gunther.Router.Llm.Bulkhead`: el limite de concurrencia del modelo de decision (control M7). Un flujo de peticiones no puede saturar al decisor.
+- `Gunther.DecisionSpec`: el estado de verificacion (`:unverified`, `:active`, `:failed`), el `report_id` y el `max_concurrency`.
+
 **Fijado**
 
 - La capa `:rule` corta cuando opino (§6.10): un `veto` o un `prefer` que casa resuelve, y `:embedding` y `:llm` no corren.
+- **La autoridad del decisor es acotada** (control M1): su salida se intersecta con el conjunto elegible, lo que dice **no crea atomos nuevos** y una etiqueta desconocida es una etiqueta desconocida.
+- **La decision se abstiene, no se adivina** (control M4): una salida invalida, una ruta `other` sin destino o una ruta cuyos modelos no son elegibles son una abstension, y la decision sigue con el fallback.
+- El decisor solo ve el `DecisionView` (control M2): texto de autoria del caller con los roles de `context_roles`, truncado a `max_input_tokens`.
 - El veto y el force se aplican antes de la cache y un hit no los salta.
 - Sin hash de catalogo no hay cache: sin el no hay forma de invalidarla.
 

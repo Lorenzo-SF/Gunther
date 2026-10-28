@@ -69,7 +69,7 @@ defmodule Gunther.Router do
          {:ok, text} <- extract_text(messages),
          catalog = Keyword.get(opts, :catalog),
          candidates = eligible(catalog),
-         {:ok, decision} <- decide(candidates, text, opts) do
+         {:ok, decision} <- decide(candidates, messages, text, opts) do
       {:ok, %{decision | duration_ms: System.monotonic_time(:millisecond) - started}}
     end
   end
@@ -108,7 +108,7 @@ defmodule Gunther.Router do
 
   # --- la decisión ---
 
-  defp decide(candidates, text, opts) do
+  defp decide(candidates, messages, text, opts) do
     consumer = Keyword.get(opts, :consumer, :default)
     global_rules = Keyword.get(opts, :rules, [])
     consumer_rules = Keyword.get(opts, :consumer_rules, [])
@@ -134,7 +134,16 @@ defmodule Gunther.Router do
           pin_model(after_rules, pin, filtered, consumer, applied_consumer, applied_global)
 
         true ->
-          soft_layers(after_rules, text, opts, filtered, applied_consumer, applied_global, vetoed? or preferred?)
+          soft_layers(
+            after_rules,
+            messages,
+            text,
+            opts,
+            filtered,
+            applied_consumer,
+            applied_global,
+            vetoed? or preferred?
+          )
       end
     end
   end
@@ -146,7 +155,7 @@ defmodule Gunther.Router do
   # cambia el hash del catalogo, que es parte de la clave.
   #
   # El pin tampoco pasa por aqui: es eje A y ya ha resuelto.
-  defp soft_layers(candidates, text, opts, filtered, applied_consumer, applied_global, rule_opined?) do
+  defp soft_layers(candidates, messages, text, opts, filtered, applied_consumer, applied_global, rule_opined?) do
     case lookup(text, opts) do
       {:ok, ranking} ->
         # El ranking cacheado se revalida: un alias que ya no es elegible se
@@ -155,7 +164,7 @@ defmodule Gunther.Router do
 
         case eligible do
           [] ->
-            compute_layers(candidates, text, opts, filtered, applied_consumer, applied_global, rule_opined?)
+            compute_layers(candidates, messages, text, opts, filtered, applied_consumer, applied_global, rule_opined?)
 
           _eligible ->
             ranked = Enum.map(eligible, & &1.alias)
@@ -166,35 +175,92 @@ defmodule Gunther.Router do
         end
 
       :error ->
-        compute_layers(candidates, text, opts, filtered, applied_consumer, applied_global, rule_opined?)
+        compute_layers(candidates, messages, text, opts, filtered, applied_consumer, applied_global, rule_opined?)
     end
   end
 
-  # Las capas blandas en orden (§6.1): `:rule` si opino, `:embedding`, y
-  # `fallback` al final. Gana la primera que opina; las siguientes no se
-  # pagan (§6.2, eje B).
-  defp compute_layers(candidates, text, opts, filtered, applied_consumer, applied_global, rule_opined?) do
+  # Las capas blandas en orden (§6.1): `:rule` si opino, `:embedding`,
+  # `:llm` y `fallback` al final. Gana la primera que opina; las siguientes no
+  # se pagan (§6.2, eje B).
+  #
+  # `router.llm` decide si la capa `:llm` existe (§6.3): `never` la quita,
+  # `fallback` (defecto) la deja correr solo si las baratas no resolvieron, y
+  # `always` la corre siempre.
+  defp compute_layers(candidates, messages, text, opts, filtered, applied_consumer, applied_global, rule_opined?) do
     {result, ranking} =
-      if rule_opined? do
-        # La capa :rule opino: corta (§6.10).
-        {resolve(candidates, :rule, [:rule], opts, filtered, applied_consumer, applied_global),
-         apply_strategy(rank_pure(candidates, prefer_weights(opts, candidates)), strategy(opts))}
-      else
-        case embedding_layer(candidates, text, opts) do
-          {:ok, ranking} ->
-            {build_embedding(ranking, candidates, filtered, applied_consumer, applied_global), ranking}
-
-          {:skip, _reason, degraded} ->
-            {fallback(candidates, opts, [], filtered, applied_consumer, applied_global, degraded),
-             apply_strategy(rank_pure(candidates, prefer_weights(opts, candidates)), strategy(opts))}
-        end
-      end
+      soft_layers_chain(candidates, messages, text, opts, filtered, applied_consumer, applied_global, rule_opined?)
 
     with {:ok, _decision} <- result do
       store(text, opts, ranking)
     end
 
     result
+  end
+
+  defp soft_layers_chain(candidates, messages, text, opts, filtered, applied_consumer, applied_global, rule_opined?) do
+    {result, ranking, degraded} =
+      if rule_opined? do
+        # La capa :rule opino: corta (§6.10).
+        {resolve(candidates, :rule, [:rule], opts, filtered, applied_consumer, applied_global),
+         apply_strategy(rank_pure(candidates, prefer_weights(opts, candidates)), strategy(opts)), []}
+      else
+        case embedding_layer(candidates, text, opts) do
+          {:ok, ranking} ->
+            {build_embedding(ranking, candidates, filtered, applied_consumer, applied_global), ranking, []}
+
+          {:skip, _reason, degraded} ->
+            {nil, nil, degraded}
+        end
+      end
+
+    case result do
+      nil ->
+        # La capa :embedding no.opino: sigue la :llm y, al final, el fallback.
+        llm_or_fallback(candidates, messages, opts, filtered, applied_consumer, applied_global, degraded)
+
+      _resolved ->
+        {result, ranking}
+    end
+  end
+
+  # La capa :llm y, si no hay, el fallback.
+  defp llm_or_fallback(candidates, messages, opts, filtered, applied_consumer, applied_global, degraded) do
+    case llm_layer(candidates, messages, opts) do
+      {:ok, ranking, info} ->
+        {build_llm(ranking, candidates, info, filtered, applied_consumer, applied_global), ranking}
+
+      {:skip, _reason, llm_degraded} ->
+        {fallback(candidates, opts, [], filtered, applied_consumer, applied_global, degraded ++ llm_degraded),
+         apply_strategy(rank_pure(candidates, prefer_weights(opts, candidates)), strategy(opts))}
+    end
+  end
+
+  # La capa :llm (SPEC §6.3). Sin modelo de decision la capa no existe.
+  defp llm_layer(candidates, messages, opts) do
+    spec = Keyword.get(opts, :decision_spec)
+    mode = Keyword.get(opts, :llm_mode, :fallback)
+
+    if is_nil(spec) or mode == :never do
+      {:skip, :no_spec, []}
+    else
+      Gunther.Router.Llm.rank(candidates, messages, spec, llm_opts(opts))
+    end
+  end
+
+  defp llm_opts(opts) do
+    opts
+    |> Keyword.take([:provider, :model_id, :timeout_ms, :allow_unverified, :mock])
+    |> Keyword.put_new(:timeout_ms, 1_500)
+  end
+
+  defp build_llm(ranking, candidates, info, filtered, applied_consumer, applied_global) do
+    chosen = List.first(ranking)
+    model = Enum.find(candidates, &(&1.alias == chosen))
+
+    decision =
+      build(model, :llm, [:llm], ranking, filtered, applied_consumer, applied_global)
+
+    {:ok, %{decision | decision_model: info}}
   end
 
   # La capa :embedding (SPEC §6.1). Sin embedder registrado la capa no
