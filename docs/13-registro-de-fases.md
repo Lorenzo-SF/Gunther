@@ -380,6 +380,17 @@ motivos, y ninguno habia saltado en local:
    no una excepcion.
 4. **La cache de decisiones reventaba si el proceso no estaba arrancado.**
    Ahora un `miss` es un `miss`, no un fallo.
+5. **El propio checker de fases se tragaaba sus propios fallos.** Tres
+   comprobaciones usaban `return 1` dentro de un `eval`, y una usaba
+   `exit 0`: un `return` o un `exit` dentro de un `eval` aborta la funcion
+   que lo contiene, asi que la comprobacion **desaparecia del informe** en
+   vez de marcarse FALLA, y el script salia con 0. Un verde falso con el
+   informe a medias se lee como un verde, que es justo lo que el script
+   existe para evitar. Las diez comprobaciones son ahora funciones que
+   devuelven su codigo de salida, y `scripts/check_phase_selftest.sh`
+   comprueba el checker con dobles: que en verde salgan las diez, y que
+   una en rojo aparezca marcada como FALLA con las otras nueve en verde y
+   el script exiting con 1.
 
 ### El cierre de la fase, y como se comprueba
 
@@ -391,8 +402,8 @@ verde, y esas comprobaciones son ejecutables:
   añadidos de r7 y r8) **por test**. Un AC esta cerrado cuando hay un test
   con ese nombre y el fichero entero pasa. Si un AC no tiene test, la fase
   no se cierra. Resultado: **10 cumplidos, 0 fallidos, 1 diferido**.
-- **`scripts/check_phase.sh F1`**: las nueve comprobaciones de calidad. Lo
-  que el script no comprueba, no se puede afirmar. Resultado: **9 en verde**.
+- **`scripts/check_phase.sh F1`**: las diez comprobaciones de calidad. Lo
+  que el script no comprueba, no se puede afirmar. Resultado: **10 en verde**.
 
 Las dos cosas que ese proceso destaparon:
 
