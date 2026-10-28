@@ -94,4 +94,54 @@ defmodule Gunther.QualityGatesTest do
       end
     end
   end
+
+  describe "el workflow de CI" do
+    @workflow Path.expand("../../.github/workflows/ci.yml", __DIR__)
+
+    defp workflow, do: File.read!(@workflow)
+
+    test "tiene las capas" do
+      workflow = workflow()
+
+      for job <- [
+            "l1-format-compile",
+            "l2-static",
+            "l3-test",
+            "l4-boundaries-docs",
+            "audit",
+            "package"
+          ] do
+        assert workflow =~ job, "falta el job #{job} en el workflow"
+      end
+    end
+
+    test "Credo cuenta los avisos de TODAS las prioridades" do
+      workflow = workflow()
+      # El mismo bug que en los aliases: sin `--strict`, Credo solo mira su
+      # configuracion por defecto y el recuento sale siempre 0. Aqui el bug
+      # estaba **en la CI**, que es la puerta que decide si un PR entra.
+      assert workflow =~ "mix credo --strict --format=oneline",
+             "la CI tiene que contar los avisos de Credo de todas las prioridades"
+
+      # Solo los usos **como comando**: el fichero `credo-debug-log.html` del
+      # job de paquete no es una invocacion.
+      usos_sin_strict = Regex.scan(~r/mix credo(?! --strict)/, workflow)
+
+      assert usos_sin_strict == [],
+             "hay un uso de credo sin --strict en el workflow: #{inspect(usos_sin_strict)}"
+    end
+
+    test "las fronteras y el lint de documento se comprueban" do
+      workflow = workflow()
+      assert workflow =~ "check_boundaries.sh"
+      assert workflow =~ "doc_lint.sh"
+    end
+
+    test "el toolchain es el unico oficial" do
+      workflow = workflow()
+      # Una sola combinacion: Erlang 28.5.0.7 + Elixir 1.19.5-otp-28.
+      assert workflow =~ "28.5.0.7"
+      assert workflow =~ "1.19.5-otp-28"
+    end
+  end
 end
