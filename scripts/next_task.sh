@@ -75,6 +75,20 @@ CHECK_AC="${GUNTHER_CHECK_AC:-$(dirname "${BASH_SOURCE[0]}")/check_ac.sh}"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
+# El JSON se escapa. Un WP con comillas ("el comando `x`") rompe el JSON si
+# se interpola a pelo, y el consumidor es una herramienta que lee la salida:
+# un JSON roto tumba la sesion entera. Todos los `printf` de JSON pasan por
+# aqui.
+json_escapar() {
+  local s="$1"
+  s="${s//\\/\\\\}"
+  s="${s//\"/\\\"}"
+  s="${s//$'\t'/\\t}"
+  s="${s//$'\r'/}"
+  s="${s//$'\n'/\\n}"
+  printf '%s' "$s"
+}
+
 # ---------------------------------------------------------------------
 # 1. Que fase toca.
 # ---------------------------------------------------------------------
@@ -117,7 +131,7 @@ NOTA="docs/fases/${FASE}.md"
 
 if [ ! -f "$NOTA" ]; then
   if [ "$JSON" = "1" ]; then
-    printf '{"tarea": "nota-de-fase", "fase": "%s", "nota": "%s"}\n' "$FASE" "$NOTA"
+    printf '{"tarea": "nota-de-fase", "fase": "%s", "nota": "%s"}\n' "$(json_escapar "$FASE")" "$(json_escapar "$NOTA")"
   else
     echo "== La siguiente tarea =="
     echo
@@ -161,7 +175,7 @@ bash "$CHECK_AC" "$NOTA" "$FASE" --machine > "$ESTADO"
 # estado inventado.
 if ! nota_validar_filas "$NOTA"; then
   if [ "$JSON" = "1" ]; then
-    printf '{"tarea": null, "fase": "%s", "motivo": "la nota de fase tiene filas que no se reconocen"}\n' "$FASE"
+    printf '{"tarea": null, "fase": "%s", "motivo": "la nota de fase tiene filas que no se reconocen"}\n' "$(json_escapar "$FASE")"
   else
     echo
     echo "== La nota de fase $NOTA tiene filas que no se reconocen =="
@@ -275,7 +289,7 @@ done < "$WPS"
 if [ -n "$faltan_wp" ]; then
   if [ "$JSON" = "1" ]; then
     printf '{"tarea": null, "fase": "%s", "motivo": "la nota de fase no declara estos WP: %s"}\n' \
-      "$FASE" "$(nota_trim "$faltan_wp")"
+      "$(json_escapar "$FASE")" "$(json_escapar "$(nota_trim "$faltan_wp")")"
   else
     echo
     echo "== La nota de fase $NOTA no declara estos WP de la fase: =="
@@ -318,7 +332,7 @@ if [ -z "$SIGUIENTE" ]; then
   # Todos los WP estan hechos: los que solo tienen AC en OK, y los que solo
   # tienen AC bloqueados por hardware. Lo que queda no es trabajo del coder.
   if [ "$JSON" = "1" ]; then
-    printf '{"tarea": null, "fase": "%s", "motivo": "no queda trabajo del coder en esta fase"}\n' "$FASE"
+    printf '{"tarea": null, "fase": "%s", "motivo": "no queda trabajo del coder en esta fase"}\n' "$(json_escapar "$FASE")"
   else
     echo "== No queda ninguna tarea en $FASE =="
     echo
@@ -360,13 +374,13 @@ done
 
 if [ "$JSON" = "1" ]; then
   printf '{"tarea": "%s", "fase": "%s", "contenido": "%s", "pruebas": "%s", "dependencias": "%s", "ac_pendientes": "%s", "ac_bloqueados": "%s"}\n' \
-    "$SIGUIENTE" \
-    "$FASE" \
-    "$(contenido_de_wp "$SIGUIENTE")" \
-    "$(pruebas_de_wp "$SIGUIENTE")" \
-    "$(deps_de_wp "$SIGUIENTE")" \
-    "$(nota_trim "$AC_PENDIENTES")" \
-    "$(nota_trim "$AC_BLOQUEADOS")"
+    "$(json_escapar "$SIGUIENTE")" \
+    "$(json_escapar "$FASE")" \
+    "$(json_escapar "$(contenido_de_wp "$SIGUIENTE")")" \
+    "$(json_escapar "$(pruebas_de_wp "$SIGUIENTE")")" \
+    "$(json_escapar "$(deps_de_wp "$SIGUIENTE")")" \
+    "$(json_escapar "$(nota_trim "$AC_PENDIENTES")")" \
+    "$(json_escapar "$(nota_trim "$AC_BLOQUEADOS")")"
   exit 0
 fi
 

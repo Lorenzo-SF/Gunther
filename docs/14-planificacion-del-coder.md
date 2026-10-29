@@ -371,7 +371,38 @@ fuera, es ejecutable, y el criterio de fin está escrito en el mismo sitio.
 Una sesión = **un WP**. El Nemotron tiene AA-LCR 52,38: en un contexto largo
 deja de encontrar lo que busca. Dos WP en una sesión es Context Rot.
 
-### 4.4 Lo que la nota de fase tiene que llevar
+### 4.4 Cómo se relanza, sesión a sesión
+
+**`PROMPT.md` no se toca nunca más.** Es un fichero estable: el prompt
+describe el método y el contrato, no el estado. Lo que cambia entre sesiones
+es la tarea, y la tarea sale del repositorio.
+
+```bash
+scripts/coder.sh                # una sesión: un WP
+scripts/coder.sh --bucle        # sesiones hasta que la cola se agote
+scripts/coder.sh --bucle --max 5
+```
+
+El script hace, por sesión:
+
+1. comprueba el toolchain (si no es el oficial, para: lo que el coder
+   verifique no vale),
+2. lee la cola (`scripts/next_task.sh --json`),
+3. relanza al coder con **`PROMPT.md` entero**, el modelo con su ruta
+   (`custom_provider:<id>/<model-id>`) y `--permission full`,
+4. **mide si la sesión ha producido algo**: la firma del repositorio (HEAD y
+   árbol) antes y después,
+5. y comprueba que los AC siguen en verde.
+
+**El paso 4 es el que detecta el fallo silencioso.** Si el repositorio no ha
+cambiado, la sesión no ha producido nada, y el bucle **para** en vez de
+seguir gastando. Con el prompt anterior ese fallo no se veía: el comando
+salía con 0 y todo parecía bien.
+
+El bucle se para solo en dos casos: la cola se ha agotado (la fase está
+hecha, y le toca al dueño firmarla), o una sesión no ha producido nada.
+
+### 4.5 Lo que la nota de fase tiene que llevar
 
 Sin esto, la cola no se puede derivar:
 
@@ -387,7 +418,7 @@ Una fila que no se reconoce (un número de celdas que no es 3 ni 4) hace
 **fallar** el script. Es mejor que se quede sin saber qué hacer a que decida
 sobre un estado inventado.
 
-### 4.5 F3 · Provider, WP a WP
+### 4.6 F3 · Provider, WP a WP
 
 F3 es la siguiente fase que **no depende de hardware**, y es la que da un
 sistema de extremo a extremo sobre providers mock y cloud. El orden del plan
@@ -417,7 +448,7 @@ F1 (`lib/gunther/core/provider/mock.ex` y `contract_test.ex`). El WP no es
 escribirlos: es **extenderlos** a lo que F3 pide, y eso hay que decirlo en la
 nota de fase.
 
-### 4.6 F2 — Lo que solo falta es hardware
+### 4.7 F2 — Lo que solo falta es hardware
 
 Los dos AC pendientes de F2 no los puede cerrar el coder: necesitan una
 máquina con GPU. Lo que sí puede hacer:

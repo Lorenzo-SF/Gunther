@@ -347,6 +347,70 @@ if ! echo "$salida" | grep -q "docs/fases/F4.md"; then
   fallar "con F3 cerrada la nota que toca deberia ser la de F4, y salio: $salida"
 fi
 
+# --- Caso 8: el JSON aguanta comillas y saltos de linea --------------------
+
+# El consumidor de `--json` es una herramienta que lee la salida. Si un WP
+# lleva comillas (y los llevan: "el comando `x`"), un JSON roto tumba la
+# sesion entera. El escaping no es cosmetico.
+#
+# El registro se restaura: el caso anterior dejo F3 cerrada.
+cat > "$ENTORNO/docs/13-registro-de-fases.md" <<'REGISTRO'
+| Fase | Inicio | Fin | Que | Desviaciones | Notas |
+| --- | --- | --- | --- | --- | --- |
+| **F0** | 2026-10-27 | **2026-10-28** | Verificacion | | |
+| **F1** | 2026-10-28 | **2026-10-28** | Nucleo | | |
+| **F3** | pendiente | | | | |
+REGISTRO
+
+cat > "$ENTORNO/docs/01-plan-de-desarrollo.md" <<'PLAN'
+## 4. Paquetes de trabajo (WP) por fase
+
+**Orden recomendado para una sola persona**: F0, F1, F3.
+
+### F3 · Provider
+
+| WP | Contenido | Pruebas |
+| --- | --- | --- |
+| F3-01 | Behaviour "Provider" con `opts.require`, y "comillas" | Contrato |
+| F3-02 | Con "comilla" | Contrato |
+PLAN
+
+cat > "$ENTORNO/docs/fases/F3.md" <<'NOTA'
+# F3 — Provider
+
+## Los WP de la fase
+
+| WP | Dependencias | AC que cierra |
+| --- | --- | --- |
+| F3-01 | — | F3-1 |
+| F3-02 | F3-01 | F3-2 |
+
+## Los AC y donde se verifican
+
+| # | AC | Test que lo verifica | En |
+| --- | --- | --- | --- |
+| F3-1 | El behaviour | `test/a.exs` · "uno" | F3 |
+| F3-2 | El contrato | `test/b.exs` · "dos" | F3 |
+NOTA
+
+cat > "$TMP/control.tsv" <<'CONTROL'
+F3-1	PENDIENTE	test/a.exs	uno
+F3-2	PENDIENTE	test/b.exs	dos
+CONTROL
+
+salida="$(correr "$TMP/control.tsv" --json)"
+
+if ! echo "$salida" | python3 -c "
+import json, sys
+json.loads(sys.stdin.read())
+" 2>/dev/null; then
+  fallar "la salida --json tiene que ser JSON valido, y no lo es: $salida"
+fi
+
+if ! echo "$salida" | grep -q 'Behaviour \\"Provider\\"'; then
+  fallar "las comillas del contenido tienen que estar escapadas, y salio: $salida"
+fi
+
 # --- Resumen ---------------------------------------------------------------
 
 if [ $FALLOS -ne 0 ]; then

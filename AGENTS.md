@@ -39,6 +39,13 @@ lista escrita a mano, porque una lista escrita a mano se pudre en silencio.
 **Una sesión = un WP.** Termina cuando el test de cada AC del WP existe y su
 fichero pasa entero, `mix check.all` está en verde, y hay un commit.
 
+Para relanzar al coder (el prompt no cambia, la tarea sí):
+
+```bash
+scripts/coder.sh                # una sesión
+scripts/coder.sh --bucle        # hasta que la cola se agote
+```
+
 ## El ciclo: TDD estricto
 
 ```

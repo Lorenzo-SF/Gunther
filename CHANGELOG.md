@@ -4,6 +4,35 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado
 
 ## [Sin publicar]
 
+### El bucle que relanza al coder, y el JSON que se rompía — 2026-10-29
+
+- **`scripts/coder.sh`: una sesión del coder, y el bucle que las repite.**
+  `PROMPT.md` **no se toca nunca más**: es un fichero estable. Lo que cambia
+  entre sesiones es la tarea, y sale del repositorio. El script comprueba el
+  toolchain (si no es el oficial, para: lo que el coder verifique no vale),
+  lee la cola, relanza al coder con el prompt entero y `--permission full`, y
+  **mide si la sesión ha producido algo**.
+- **El bucle detecta el fallo silencioso.** Es el que ya pasó: con el prompt
+  anterior, el Nemotron leyó el SPEC, corrió todas las comprobaciones y
+  respondió con un resumen de ocho minutos. **Cero ficheros escritos**, y el
+  comando salía con 0, así que todo parecía bien. `coder.sh` compara la firma
+  del repositorio (HEAD y árbol) antes y después de cada sesión: si no ha
+  cambiado, **para**, en vez de seguir gastando la GPU en sesiones que no
+  producen nada. Y después comprueba que los AC siguen en verde.
+- **`scripts/coder_selftest.sh`** y `test/gunther/scripts/coder_test.exs`: la
+  autocomprobación, con un doble de `mcode` que sabe trabajar y sabe
+  resumir. Cada invocación tiene **plazo**: un script que se cuelga no es un
+  selftest que falla, es uno que no acaba nunca.
+- **El JSON de `next_task.sh --json` se escapaba a medias.** Los campos iban
+  interpolados a pelo, así que un WP con comillas («el comando `x`») lo
+  rompía. Y el consumidor es una herramienta que lee la salida: un JSON roto
+  tumba la sesión entera. Ahora escapa, y hay un caso en el selftest que lo
+  fija.
+- **`next_task.sh` acepta los argumentos en cualquier orden.** `--machine` (en
+  `check_ac.sh`) y `--json` (en `next_task.sh`) solo se reconocían en una
+  posición fija: un flag en otro sitio se leía como un nombre de fichero, y el
+  fallo era silencioso.
+
 ### La cola de trabajo, derivada del repositorio — 2026-10-29
 
 - **`scripts/next_task.sh`: la siguiente tarea, deducida del repositorio.** No hay ninguna lista de tareas escrita a mano: la cola sale de tres fuentes que no se pueden desincronizar entre sí — el orden recomendado del plan (`docs/01`), las fases **cerradas** del registro (las que tienen fecha de fin; «en curso» no es una fecha) y la nota de fase. El WP que toca es el primero cuyos AC **no** están todos en verde, y eso lo dice `scripts/check_ac.sh --machine`, que **ejecuta los tests de verdad**. Un WP está terminado cuando sus AC pasan: no hay un «hecho» escrito a mano que se pueda quedar viejo. El script sale con 0 y la tarea, o con 1 y «no queda trabajo».

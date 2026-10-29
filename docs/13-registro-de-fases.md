@@ -539,3 +539,27 @@ no terminaria nunca, y el coder recibiria la misma tarea una sesion tras otra.
 `scripts/check_phase.sh` tiene ahora una comprobacion mas: **la cola de
 trabajo se puede derivar del repositorio**. Si `next_task.sh` no da una tarea
 legible, la fase no se puede cerrar: el coder se quedaria parado.
+
+### El bucle, y por que el prompt no se toca
+
+El `PROMPT.md` es un fichero **estable**: describe el método y el contrato, no
+el estado. No se toca entre sesiones. Lo que cambia es la tarea, y sale del
+repositorio.
+
+`scripts/coder.sh` hace el relanzamiento, y por sesión:
+
+1. comprueba el toolchain;
+2. lee la cola;
+3. relanza al coder con el prompt entero;
+4. **mide si la sesion ha producido algo** (la firma del repositorio: HEAD y
+   arbol, antes y despues);
+5. comprueba que los AC siguen en verde.
+
+El paso 4 es el que detecta el fallo silencioso: con el prompt anterior, el
+Nemotron leyo, verifico y resumo, **sin escribir ni un fichero**, y el
+comando salia con 0. Aqui el bucle **para**. Un bucle que no distingue esa
+situacion se gasta la GPU en sesiones que no producen nada.
+
+`scripts/coder_selftest.sh` lo comprueba con un doble de `mcode` que sabe
+trabajar y sabe resumir, y **cada invocacion tiene plazo**: un script que se
+cuelga no es un selftest que falla, es uno que no acaba nunca.

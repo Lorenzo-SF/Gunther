@@ -24,6 +24,10 @@ credo-debug-log.html
 # evidencia (la evidencia es el resumen que imprime).
 /probes/output/*.log
 
+# Los logs de las sesiones del coder, si alguien los deja dentro por error.
+# El log por defecto va fuera del repo (ver scripts/coder.sh).
+.coder-logs/
+
 # Ficheros del sistema operativo
 .DS_Store
 Thumbs.db
