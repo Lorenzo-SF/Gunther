@@ -81,41 +81,69 @@ bloqueada con el resto del trabajo hecho es un entregable, no un problema.
 La misma lógica con el CI: el prompt no dice "no merges nunca", dice "mira el
 run: tiene que estar en verde". Una puerta se comprueba; no se da por hecha.
 
-## Por qué el prompt dice la tarea y dice cuándo se ha terminado
+## Por qué el prompt NO dice la tarea: la lee de un script
 
 La primera versión del prompt falló en esto, y de una forma que solo se ve
-con la sesión delante: el Nemotron leyo el prompt, exploro el repositorio,
-corrio **todas** las comprobaciones, y respondio con un resumen de ocho
-minutos. **Cero ficheros escritos.** Su conclusion fue "the implementation is
+con la sesión delante: el Nemotron leyo el prompt, exploró el repositorio,
+corrió **todas** las comprobaciones, y respondió con un resumen de ocho
+minutos. **Cero ficheros escritos.** Su conclusión fue "the implementation is
 complete and all acceptance criteria for F1 have been verified and closed".
 
-Lo que habia hecho estaba bien: las comprobaciones eran las de verdad (420
-tests, Credo 0, Dialyzer 0, `check_phase F1` y `F2` en verde) y las cifras
-coincidian con las medidas. El problema es que **eso no era la tarea**.
+Lo que había hecho estaba bien: las comprobaciones eran las de verdad y las
+cifras coincidían con las medidas. El problema es que **eso no era la tarea**.
 
-Por que: el prompt describia el *metodo* (el ciclo de TDD, las comprobaciones,
-las trampas) pero no decia **que hacer**, y decia "elige una tarea". "Elige"
-es opcional. Y como "verificar" estaba en la lista de cosas que hacer, verificar
-le parecio un trabajo terminado. Sin un criterio de terminacion, un agente
-optimiza por **poder contestar un resumen**, que es lo que se le da mejor.
+Por qué: el prompt describía el *método* (el ciclo de TDD, las comprobaciones,
+las trampas) pero no decía **qué hacer**, y decía "elige una tarea". "Elige"
+es opcional. Y como "verificar" estaba en la lista de cosas que hacer,
+verificar le parecía un trabajo terminado. Sin un criterio de terminación, un
+agente optimiza por **poder contestar un resumen**, que es lo que se le da
+mejor.
 
-Los tres arreglo:
+El arreglo son tres cosas, y las tres están en el prompt:
 
-1. **La tarea, en imperativo.** Si no te la dan, la tuya es "escribe
-   `docs/fases/F3.md`". No "elige": escribe. Y con el contenido minimo que
-   tiene que tener.
-2. **Lo que NO es un entregable**, dicho explicitly: leer el SPEC, correr los
-   checks y resumir es el punto de partida, no el resultado. "Lo he
-   verificado y esta todo verde" no es un resumen del trabajo.
-3. **El criterio de terminacion**: al terminar la sesion hay un **fichero
-   nuevo o un commit**. Si no hay ninguna de las dos cosas, la sesion no ha
-   producido nada.
+1. **Lo que NO es un entregable**, dicho explícitamente: leer el SPEC, correr
+   los checks y resumir es el punto de partida, no el resultado.
+2. **El criterio de terminación**, en dos niveles: el de la **sesión** (un WP
+   con su test en verde y su commit) y el de la **fase** (la cola agotada y
+   `check_phase.sh` en verde; la firma es del dueño).
+3. **La tarea sale de un script**, no del prompt:
 
-Y una cuarta cosa, que no es de redaccion sino de rendimiento: el prompt dice
-que el SPEC r9 son 3271 lineas (112 000 tokens) y que **no se lea entero**,
-y que r7 y r8 son historicos. En la sesion que fallo, el modelo se comio el
+   ```bash
+   bash scripts/next_task.sh
+   ```
+
+   El prompt dice "ejecuta ese script y haz exactamente lo que dice". La
+   tarea **no está escrita en el prompt** porque se escribiría vieja: en
+   cuanto F3 estuviera cerrada, un prompt que dijera "escribe
+   `docs/fases/F3.md`" mandaría al modelo a escribir una nota que ya existe.
+
+### Por qué la cola está en el repositorio y no en un documento
+
+Una lista de tareas escrita a mano se pudre en silencio: nadie la actualiza,
+el modelo trabaja sobre una lista que ya no describe el repositorio, y no
+se queja. Es el mismo fallo que una lista de checkboxes, con el añadido de
+que el modelo sigue adelante con confianza.
+
+`scripts/next_task.sh` la **deriva** de tres fuentes que no se pueden
+desincronizar entre sí: el orden recomendado del plan, las fases cerradas
+del registro y la nota de fase. Y el criterio de "WP terminado" es
+**ejecutable**: `check_ac.sh --machine` corre los tests y devuelve el estado
+de cada AC. No hay un "hecho" escrito a mano.
+
+### Por qué el prompt no lleva cifras del estado
+
+Ya se ha dicho arriba, y es la misma razón por la que el prompt tampoco lleva
+la tarea: **una cifra dentro del prompt es una cifra que se queda vieja**. El
+prompt no dice "10 de sus 12 AC cumplidos" porque en cuanto se cumpla uno
+más, el modelo contesta con datos de un repo que ya no es este. Se leen del
+registro y de los scripts, que son las fuentes.
+
+Y una cuarta cosa, que no es de redacción sino de rendimiento: el prompt dice
+que el SPEC r9 son 3271 líneas (112 000 tokens) y que **no se lea entero**,
+y que r7 y r8 son históricos. En la sesión que falló, el modelo se comió el
 SPEC en varias lecturas: con AA-LCR 52,38, leer
 112 000 tokens de SPEC es justo como se pierde el hilo.
+
 
 ## La pregunta del final
 
@@ -133,6 +161,9 @@ verde.
 ## Lo que NO está en el prompt, y por qué
 
 - **Los números del estado.** Viven en el registro de fases, que se lee.
+- **La tarea.** La calcula `scripts/next_task.sh` a partir del repositorio.
+  En el prompt está el *script*, no la tarea: una tarea escrita en el prompt
+  es una tarea que se queda vieja.
 - **La lista de ficheros del repo.** La tiene `docs/05-estructura-del-repositorio.md`.
 - **El detalle de los AC de F3.** Los tiene el SPEC (§19) y la nota de fase.
 - **La configuración del servidor de inferencia.** Es de la máquina, no del

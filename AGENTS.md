@@ -47,7 +47,7 @@ fichero pasa entero, `mix check.all` está en verde, y hay un commit.
 3. Implementación mínima para que pase.
 4. mix format && mix test
 5. Refactor con los checks en verde.
-6. Los nueve comandos de "Las comprobaciones" (o `mix check.all`).
+6. Los comandos de "Las comprobaciones" (o `mix check.all`).
 7. Nota de fase + CHANGELOG + registro de fases.
 8. Commit: feat(F3-0X): qué y por qué.
 ```

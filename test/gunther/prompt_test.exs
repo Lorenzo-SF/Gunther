@@ -154,5 +154,17 @@ defmodule Gunther.PromptTest do
       refute prompt =~ "no se mergea",
              "la CI verde permite mergear; lo que no se hace es cerrar la fase"
     end
+
+    test "el prompt no trabaja encima de main", %{prompt: prompt} do
+      # El proceso del repo (`docs/02-proceso-de-desarrollo.md` §1): `main`
+      # esta siempre verde y el trabajo va en una rama `fNN/wp-nn-descripcion`.
+      # Si el prompt dijera que la rama de trabajo es `main`, el modelo
+      # trabajaria encima de la rama verde.
+      refute prompt =~ "La rama de trabajo es **`main`**",
+             "el trabajo va en una rama, no en main"
+
+      assert prompt =~ "git checkout -b fNN/wp-nn-descripcion",
+             "el prompt tiene que decir como se crea la rama de trabajo"
+    end
   end
 end

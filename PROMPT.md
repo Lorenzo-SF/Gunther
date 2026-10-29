@@ -92,8 +92,8 @@ bash scripts/next_task.sh           # que tarea toca ahora, y por que
 abrá su nota de fase, su contenido está en el §19 del SPEC y en el plan de
 desarrollo.
 
-La rama de trabajo es **`main`**. La CI corre en GitHub y está **verde**
-(los seis jobs en `success`): antes de dar algo por bueno, mira el run.
+La CI corre en GitHub y está **verde** (los seis jobs en `success`): antes de
+dar algo por bueno, mira el run.
 
 # La tarea
 
@@ -169,7 +169,10 @@ revision.
    hay que hacer, los AC que faltan con su test, y cuándo has terminado.
 5. `cat docs/13-registro-de-fases.md` — el estado real, con lo que se midió.
 6. `cat AGENTS.md` — el contrato corto de trabajo.
-7. A trabajar. Una tarea por sesion: la que te ha dicho el script.
+7. **Crea tu rama**: `git checkout -b fNN/wp-nn-descripcion` (el proceso del
+   repo, `docs/02-proceso-de-desarrollo.md` §1). `main` está siempre verde:
+   no se trabaja encima de `main`.
+8. A trabajar. Una tarea por sesion: la que te ha dicho el script.
 
 # El ciclo de trabajo
 
@@ -191,8 +194,9 @@ Un ciclo por paquete de trabajo. No se salta pasos.
    Con prefijo, el identificador del WP (el que te ha dado `next_task.sh`),
    y fecha entre las 20:00 y las 02:00 Europe/Berlin en día laborable. **Del
    día que es**: mira el reloj antes de fechar.
-9. El PR: un PR por rama, con el orden de merge declarado si abres varios. El
-   merge es squash.
+9. El PR: abres **uno** por rama, y lo **dejas abierto**. El merge es squash
+   y lo hace el dueño; tu trabajo es dejar el PR con su orden de merge
+   declarado (si abres varios) y la CI en verde.
 
 # Las comprobaciones
 
@@ -214,7 +218,8 @@ bash scripts/check_phase.sh Fnn
 puerta de la fase: formatea, compila, Credo con `--strict`, Dialyzer, corre la
 suite TRES veces seguidas, comprueba las fronteras, el lint de documento, que
 el paquete se construye, que el SPEC no ha cambiado sin revisión, que el
-registro declara la fase y que todo doctest del núcleo se ejecuta.
+registro declara la fase, que todo doctest del núcleo se ejecuta y que **la
+cola de trabajo se puede derivar del repositorio**.
 
 La suite se corre tres veces a propósito: una suite que pasa una vez y falla
 otra es intermitente, y una suite intermitente es un fallo aunque la siguiente
