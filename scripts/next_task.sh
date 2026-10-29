@@ -153,12 +153,12 @@ if [ ! -f "$NOTA" ]; then
     echo "  lee para saber que toca:"
     echo
     echo "    | WP | Dependencias | AC que cierra |"
-    echo "    | F3-01 | — | F3-1, F3-2 |"
+    echo "    | F3-01 | — | F3-AC1, F3-AC2 |"
     echo
     echo "  Y el AC cierra con:"
     echo
     echo "    | # | AC | Test que lo verifica | En |"
-    echo "    | F3-1 | ... | \`test/...exs\` · \"nombre del test\" | F3 |"
+    echo "    | F3-AC1 | ... | \`test/...exs\` · \"nombre del test\" | F3 |"
   fi
   exit 0
 fi

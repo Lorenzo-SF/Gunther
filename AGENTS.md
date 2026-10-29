@@ -18,8 +18,11 @@ comportamiento está **fijado** en `SPEC-000-GUNTHER_r9.md` (SPEC vigente).
 ## Lo que manda, por orden
 
 1. **`SPEC-000-GUNTHER_r9.md`** — el comportamiento. Si el código necesita algo
-   que el SPEC no dice, **para y pregunta**: el SPEC se cambia con una revisión
+   que el SPEC no dice, **anótalo y sigue**: el SPEC se cambia con una revisión
    nueva (`r10`...), que aprueba el dueño con su tabla de cambios en el Anexo D.
+   Preguntar es para cuando hay alguien delante; en una sesión sin
+   interlocutor, la duda se escribe en la nota de fase y se entrega el
+   trabajo.
 2. **`docs/08-decisiones/`** — los ADR: el porqué de cada decisión.
 3. **`docs/13-registro-de-fases.md`** — el estado real, con lo que se midió.
 4. **`docs/fases/Fnn.md`** — la nota de la fase en curso: AC, decisiones
@@ -39,6 +42,19 @@ lista escrita a mano, porque una lista escrita a mano se pudre en silencio.
 **Una sesión = un WP.** Termina cuando el test de cada AC del WP existe y su
 fichero pasa entero, `mix check.all` está en verde, y hay un commit.
 
+**Los AC que no son tuyos.** `check_ac.sh` lista los AC de **la fase
+entera**, y muchos salen en `FALLA`. Los tuyos son los que nombra
+`next_task.sh`. Los demás los cierra otro WP, en otra sesión.
+
+**WP y AC tienen formas distintas**, y no se parecen:
+
+| Qué | Forma | Ejemplo | Qué es |
+| --- | --- | --- | --- |
+| WP | `Fnn-nn` | `F3-04` | Una unidad de trabajo: **un commit** |
+| AC | `Fnn-ACn` | `F3-AC7` | Una condición que hay que comprobar: **un test** |
+
+Si ves `F3-04`, es un WP. Si ves `F3-AC4`, es un AC.
+
 Para relanzar al coder (el prompt no cambia, la tarea sí):
 
 ```bash
@@ -56,7 +72,7 @@ scripts/coder.sh --bucle        # hasta que la cola se agote
 5. Refactor con los checks en verde.
 6. Los comandos de "Las comprobaciones" (o `mix check.all`).
 7. Nota de fase + CHANGELOG + registro de fases.
-8. Commit: feat(F3-0X): qué y por qué.
+8. Commit: feat(F3-04): qué y por qué.
 ```
 
 **Un AC sin test es un AC sin cumplir.** Un AC bloqueado o pendiente tampoco
@@ -132,6 +148,10 @@ más han costado:
   se arregla el doc.
 - **Un prompt sin tarea y sin criterio de terminación** hace que el modelo
   resuma en vez de trabajar: verificar no es un entregable.
+- **Un identificador que se parece a otro** se confunde: `F3-04` (WP) y
+  `F3-AC4` (AC) no pueden parecerse, y por eso el AC lleva el infijo `AC`.
+- **Una sesión que termina con una pregunta no ha producido nada**: nadie
+  contesta. Se anota la duda y se entrega.
 
 ## Antes de commitear
 

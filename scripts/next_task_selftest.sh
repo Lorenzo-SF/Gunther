@@ -127,24 +127,24 @@ cat > "$ENTORNO/docs/fases/F3.md" <<'NOTA'
 
 | WP | Dependencias | AC que cierra |
 | --- | --- | --- |
-| F3-01 | — | F3-1 |
-| F3-02 | F3-01 | F3-2 |
-| F3-03 | F3-01 | F3-3 |
+| F3-01 | — | F3-AC1 |
+| F3-02 | F3-01 | F3-AC2 |
+| F3-03 | F3-01 | F3-AC3 |
 
 ## Los AC y donde se verifican
 
 | # | AC | Test que lo verifica | En |
 | --- | --- | --- | --- |
-| F3-1 | El behaviour | `test/a.exs` · "uno" | F3 |
-| F3-2 | El contrato | `test/b.exs` · "dos" | F3 |
-| F3-3 | La estructura | `test/c.exs` · "tres" | F3 |
+| F3-AC1 | El behaviour | `test/a.exs` · "uno" | F3 |
+| F3-AC2 | El contrato | `test/b.exs` · "dos" | F3 |
+| F3-AC3 | La estructura | `test/c.exs` · "tres" | F3 |
 NOTA
 
 # El doble: ningun AC en verde todavia.
 cat > "$TMP/control.tsv" <<'CONTROL'
-F3-1	PENDIENTE	test/a.exs	uno
-F3-2	PENDIENTE	test/b.exs	dos
-F3-3	PENDIENTE	test/c.exs	tres
+F3-AC1	PENDIENTE	test/a.exs	uno
+F3-AC2	PENDIENTE	test/b.exs	dos
+F3-AC3	PENDIENTE	test/c.exs	tres
 CONTROL
 
 salida="$(correr "$TMP/control.tsv")"
@@ -165,9 +165,9 @@ fi
 # --- Caso 3: el primer WP en verde se salta -------------------------------
 
 cat > "$TMP/control.tsv" <<'CONTROL'
-F3-1	OK	test/a.exs	uno
-F3-2	PENDIENTE	test/b.exs	dos
-F3-3	PENDIENTE	test/c.exs	tres
+F3-AC1	OK	test/a.exs	uno
+F3-AC2	PENDIENTE	test/b.exs	dos
+F3-AC3	PENDIENTE	test/c.exs	tres
 CONTROL
 
 salida="$(correr "$TMP/control.tsv")"
@@ -179,9 +179,9 @@ fi
 # --- Caso 4: una dependencia sin cumplir se salta -------------------------
 
 cat > "$TMP/control.tsv" <<'CONTROL'
-F3-1	PENDIENTE	test/a.exs	uno
-F3-2	PENDIENTE	test/b.exs	dos
-F3-3	OK	test/c.exs	tres
+F3-AC1	PENDIENTE	test/a.exs	uno
+F3-AC2	PENDIENTE	test/b.exs	dos
+F3-AC3	OK	test/c.exs	tres
 CONTROL
 
 salida="$(correr "$TMP/control.tsv")"
@@ -193,9 +193,9 @@ fi
 # --- Caso 5: todo en verde, no queda tarea --------------------------------
 
 cat > "$TMP/control.tsv" <<'CONTROL'
-F3-1	OK	test/a.exs	uno
-F3-2	OK	test/b.exs	dos
-F3-3	OK	test/c.exs	tres
+F3-AC1	OK	test/a.exs	uno
+F3-AC2	OK	test/b.exs	dos
+F3-AC3	OK	test/c.exs	tres
 CONTROL
 
 salida="$(correr "$TMP/control.tsv")"
@@ -211,13 +211,13 @@ fi
 
 # --- Caso 5b: un AC bloqueado por hardware no es trabajo del coder --------
 
-# F3-3 esta BLOQUEADA (depende del hardware). El WP F3-03 que lo cierra
+# F3-AC3 esta BLOQUEADA (depende del hardware). El WP F3-03 que lo cierra
 # esta hecho en cuanto lo que el coder puede hacer esta hecho: si no, el
 # coder recibiria la misma tarea una sesion tras otra, para siempre.
 cat > "$TMP/control.tsv" <<'CONTROL'
-F3-1	OK	test/a.exs	uno
-F3-2	OK	test/b.exs	dos
-F3-3	BLOQUEADA	test/c.exs	tres
+F3-AC1	OK	test/a.exs	uno
+F3-AC2	OK	test/b.exs	dos
+F3-AC3	BLOQUEADA	test/c.exs	tres
 CONTROL
 
 salida="$(correr "$TMP/control.tsv")"
@@ -227,7 +227,7 @@ if [ $rc -eq 0 ]; then
   fallar "con un AC bloqueado por hardware deberia salir con 1 (no queda trabajo del coder), y salio con 0"
 fi
 
-if ! echo "$salida" | grep -q "F3-3"; then
+if ! echo "$salida" | grep -q "F3-AC3"; then
   fallar "el AC bloqueado deberia nombrarse, y salio: $salida"
 fi
 
@@ -238,9 +238,9 @@ fi
 # --- Caso 5c: un WP con un AC pendiente si es trabajo del coder ------------
 
 cat > "$TMP/control.tsv" <<'CONTROL'
-F3-1	OK	test/a.exs	uno
-F3-2	OK	test/b.exs	dos
-F3-3	PENDIENTE	test/c.exs	tres
+F3-AC1	OK	test/a.exs	uno
+F3-AC2	OK	test/b.exs	dos
+F3-AC3	PENDIENTE	test/c.exs	tres
 CONTROL
 
 salida="$(correr "$TMP/control.tsv")"
@@ -265,20 +265,20 @@ cat > "$ENTORNO/docs/fases/F3.md" <<'NOTA'
 
 | WP | Dependencias | AC que cierra |
 | --- | --- | --- |
-| F3-01 | — | F3-1 |
-| F3-02 | F3-01 | F3-2 |
+| F3-01 | — | F3-AC1 |
+| F3-02 | F3-01 | F3-AC2 |
 
 ## Los AC y donde se verifican
 
 | # | AC | Test que lo verifica | En |
 | --- | --- | --- | --- |
-| F3-1 | El behaviour | `test/a.exs` · "uno" | F3 |
-| F3-2 | El contrato | `test/b.exs` · "dos" | F3 |
+| F3-AC1 | El behaviour | `test/a.exs` · "uno" | F3 |
+| F3-AC2 | El contrato | `test/b.exs` · "dos" | F3 |
 NOTA
 
 cat > "$TMP/control.tsv" <<'CONTROL'
-F3-1	OK	test/a.exs	uno
-F3-2	OK	test/b.exs	dos
+F3-AC1	OK	test/a.exs	uno
+F3-AC2	OK	test/b.exs	dos
 CONTROL
 
 salida="$(correr "$TMP/control.tsv")"
@@ -301,18 +301,18 @@ cat > "$ENTORNO/docs/fases/F3.md" <<'NOTA'
 
 | WP | Dependencias | AC que cierra |
 | --- | --- | --- |
-| F3-01 | — | F3-1 |
-| F3-02 | — | F3-1 | algo de mas |
+| F3-01 | — | F3-AC1 |
+| F3-02 | — | F3-AC1 | algo de mas |
 
 ## Los AC y donde se verifican
 
 | # | AC | Test que lo verifica | En |
 | --- | --- | --- | --- |
-| F3-1 | El behaviour | `test/a.exs` · "uno" | F3 |
+| F3-AC1 | El behaviour | `test/a.exs` · "uno" | F3 |
 NOTA
 
 cat > "$TMP/control.tsv" <<'CONTROL'
-F3-1	PENDIENTE	test/a.exs	uno
+F3-AC1	PENDIENTE	test/a.exs	uno
 CONTROL
 
 salida="$(correr "$TMP/control.tsv")"
@@ -382,20 +382,20 @@ cat > "$ENTORNO/docs/fases/F3.md" <<'NOTA'
 
 | WP | Dependencias | AC que cierra |
 | --- | --- | --- |
-| F3-01 | — | F3-1 |
-| F3-02 | F3-01 | F3-2 |
+| F3-01 | — | F3-AC1 |
+| F3-02 | F3-01 | F3-AC2 |
 
 ## Los AC y donde se verifican
 
 | # | AC | Test que lo verifica | En |
 | --- | --- | --- | --- |
-| F3-1 | El behaviour | `test/a.exs` · "uno" | F3 |
-| F3-2 | El contrato | `test/b.exs` · "dos" | F3 |
+| F3-AC1 | El behaviour | `test/a.exs` · "uno" | F3 |
+| F3-AC2 | El contrato | `test/b.exs` · "dos" | F3 |
 NOTA
 
 cat > "$TMP/control.tsv" <<'CONTROL'
-F3-1	PENDIENTE	test/a.exs	uno
-F3-2	PENDIENTE	test/b.exs	dos
+F3-AC1	PENDIENTE	test/a.exs	uno
+F3-AC2	PENDIENTE	test/b.exs	dos
 CONTROL
 
 salida="$(correr "$TMP/control.tsv" --json)"

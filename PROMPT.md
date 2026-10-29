@@ -121,6 +121,64 @@ Si el script dice que hay que escribir la nota de fase, escribe la nota de
 fase: `docs/fases/Fnn.md`, con los AC y su test, los WP con su orden y sus
 dependencias, las decisiones locales y lo que se difiere a otra fase.
 
+La nota lleva **dos tablas**, y su forma exacta está en
+`docs/fases/README.md` (que es la plantilla): la de WP (tres celdas:
+`WP`, `Dependencias`, `AC que cierra`) y la de AC (cuatro: `#`, `AC`,
+`Test que lo verifica`, `En`). **Los identificadores tienen su forma:**
+el WP es `Fnn-nn` y el AC es `Fnn-ACn`. Si la nota está mal escrita, la cola
+no sabe qué hacer y el script **falla**: no adivines el formato, lee la
+plantilla.
+
+### Los AC que no son tuyos
+
+`scripts/check_ac.sh --machine` lista **todos** los AC de la fase, y muchos
+salen en `FALLA`. **No son tuyos.** Los tuyos son los que nombra
+`next_task.sh`, y son los únicos que cierras en esta sesión.
+
+Los AC que no son tuyos los cierra otro WP, en otra sesión. Si los implementas
+tú, haces el trabajo de otra sesión y el tuyo se queda a medias: trabajo
+duplicado y ninguna sesión completa.
+
+Si dudas de si un AC es tuyo, es que no lo es: `next_task.sh` los nombra.
+
+### Los WP y los AC tienen nombres distintos
+
+Un **WP** (paquete de trabajo) y un **AC** (criterio de aceptación) son cosas
+distintas, y sus identificadores lo dicen:
+
+| Qué | Cómo se escribe | Ejemplo | Qué es |
+| --- | --------------- | ------- | ------ |
+| WP | `Fnn-nn` (dos dígitos) | `F3-04` | Una unidad de trabajo: **un commit** |
+| AC | `Fnn-ACn` | `F3-AC7` | Una condición que hay que comprobar: **un test** |
+
+**`F3-04` no es `F3-AC4`.** Si el identificador lleva el infijo `AC`, es un
+AC. Si no lo lleva y tiene dos dígitos, es un WP. No los intercambies: el
+error de confundirlos es cerrar el AC equivocado y declarar un WP terminado
+sin haberlo hecho.
+
+Ojo con el otro sentido: el SPEC §19.2 nombra algunos AC como `F1-01` y
+`F4-03`, y esos **son los WP del plan**, no AC de la nota. El SPEC es la ley
+y no se toca; lo que manda en el trabajo es lo que dice `next_task.sh`.
+
+### No preguntes: haz
+
+Si algo no cuadra, **no preguntes y no esperes**. En una sesión sin
+interlocutor, una pregunta es un deadlock: nadie la contesta y la sesión se
+acaba sin entregable.
+
+- Si el script dice qué hacer, **hazlo**. No preguntes si quieres hacer otra
+  cosa, ni pidas permiso para empezar. El permiso ya está dado: la tarea es
+  del script.
+- Si un AC te parece mal escrito o un nombre no te cuadra, **implementa lo que
+  el AC dice** y anótalo en la nota de fase. Una duda sobre el texto de un AC
+  no es motivo para no hacer nada.
+- Si el SPEC no dice algo que necesitas, **anótalo y sigue con lo demás**. No
+  pares la sesión entera por una duda.
+
+La pregunta que sí tiene sentido, al final, es la de fondo: ¿puede alguien que
+no estuvo en esta sesión decir, leyendo el repositorio, qué se hizo, por qué y
+cómo se comprueba? Esa se responde **con un commit**, no con un texto.
+
 ## Los dos criterios de fin
 
 **El criterio de fin de la sesión.** Una sesión = **un WP**. Termina cuando el
@@ -178,9 +236,11 @@ revision.
 
 Un ciclo por paquete de trabajo. No se salta pasos.
 
-1. Leer el AC del SPEC (§19) y la nota de fase. Si el código necesita un
-   comportamiento que el SPEC no dice, PARA: es una pregunta para el dueño,
-   no una decisión tuya. Anótala y sigue con lo demás.
+1. Leer el AC del SPEC (§19) y la nota de fase. Los AC **de tu WP** son los que
+   nombra `next_task.sh`; los demás son de otros WP y no son tuyos. Si el
+   código necesita un comportamiento que el SPEC no dice, anótalo en la nota de
+   fase y **sigue con lo demás**: es una pregunta para el dueño, no una
+   decisión tuya, y no detiene la sesión.
 2. Escribir el test que falla. ESTE PASO VA PRIMERO, SIEMPRE. Un test que
    pasa sin código que lo justifique no es un test, es decorado. El orden de
    los commits deja esta prueba: primero el test, después la implementación.
@@ -283,6 +343,11 @@ Todas están medidas: cada una costó tiempo.
     de otros carriles.
 11. Verifica contra la fuente antes de fiarte de un texto: el fichero del
     otro proyecto, el código original, el README del upstream.
+12. **No afirmes el estado de un fichero sin mirarlo.** Un fichero que no has
+    abierto no existe para ti: `ls`, `git status`, `git log` o el propio
+    fichero. Decir que un test "existe" o que una suite está "completa" sin
+    haberlo comprobado es inventar, y un invento que se cuela en el informe
+    de la sesión es peor que no decir nada.
 
 # Lo que NO decides tú
 
@@ -311,15 +376,26 @@ Todas están medidas: cada una costó tiempo.
 
 # Si algo no cuadra
 
+**Nada de esto detiene la sesión.** Se anota y se sigue.
+
 - Si el SPEC y el código discrepan, no toques el código a ciegas: el SPEC
-  manda, y su cambio es una pregunta para el dueño.
+  manda, y su cambio es una pregunta para el dueño. **Anótala en la nota de
+  fase y sigue con el resto del trabajo.**
 - Si una comprobación falla y no sabes por qué, léela antes de arreglarla. Un
   check en rojo es información, no un obstáculo.
 - Si el resultado de una medición no se puede repetir, no lo declares
   bueno: lo que no se mide no está hecho.
-- Si te quedas sin contexto a mitad de una tarea, PARA y deja el estado
-  escrito en un fichero. Reanudar desde un fichero es barato; reanudar desde
-  una conversación que has perdido, no.
+- Si un AC de **tu** WP te parece mal escrito, **implementa lo que dice** y
+  anótalo. Un AC mal escrito se arregla en la nota de fase; no se deja sin
+  hacer.
+- Si te quedas sin contexto a mitad de una tarea, deja el estado escrito en un
+  fichero y commitea lo que tengas. Reanudar desde un fichero es barato;
+  reanudar desde una conversación que has perdido, no. Una sesión que acaba
+  con un fichero a medias **ha producido algo**; una que acaba con una
+  pregunta, no.
+
+**Nunca acabes la sesión con una pregunta.** Nadie la va a contestar. Si
+dudas, escríbela en la nota de fase y entrega el trabajo.
 
 # La pregunta de fondo, siempre
 
@@ -327,5 +403,5 @@ Todas están medidas: cada una costó tiempo.
 qué se hizo, por qué y cómo se comprueba?
 
 Si la respuesta es no, el trabajo está a medias, por muy verde que esté el
-check de formato.
+check de formato. **Se contesta con un commit, no con un texto.**
 ````

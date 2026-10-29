@@ -115,8 +115,10 @@ declare -a DETALLE=()
 
 # Las filas de la tabla de AC. Se leen por el separador `|`.
 while IFS= read -r linea || [ -n "$linea" ]; do
-  # Solo las filas de AC: el identificador es `F<numero>-<numero>`.
-  # Con un prefijo mas laxo ("F"), se colaban filas de otras tablas.
+  # Solo las filas de AC: el identificador es `F<numero>-AC<numero>`.
+  # Con un prefijo mas laxo ("F"), se colaban filas de otras tablas. El
+  # prefijo es solo un filtro barato: el identificador se comprueba
+  # despues, con `nota_es_id`.
   case "$linea" in
     "| F"[0-9]"-"*) ;;
     *) continue ;;
@@ -132,14 +134,26 @@ while IFS= read -r linea || [ -n "$linea" ]; do
   # La nota de fase lleva ademas la tabla de WP, que tiene **tres**:
   # | WP | Dependencias | AC que cierra |
   #
-  # El discriminante es el numero de celdas, no el nombre del
-  # identificador: un AC y un WP pueden llamarse igual (`F4-12`), y leer
-  # una fila de WP como si fuera de AC contaria AC que no existen.
+  # El discriminante es el numero de celdas: la tabla de WP tiene tres y la
+  # de AC cuatro, y leer una fila de WP como si fuera de AC contaria AC que
+  # no existen.
+  #
+  # Y el identificador es un discriminante todavia mas fuerte: un AC se
+  # escribe `Fnn-ACn` y un WP `Fnn-nn`, asi que una fila de cuatro celdas
+  # cuyo identificador es de WP no es un AC, y se salta.
+  # `nota_validar_filas` ya ha fallado antes si esa fila estaba mal, asi
+  # que aqui solo se filtra.
   if [ "$(nota_num_celdas "$cuerpo")" != "4" ]; then
     continue
   fi
 
   IFS='|' read -r _id _ac _test _fase <<< "$cuerpo"
+  _id="$(echo "$_id" | sed 's/^ *//; s/ *$//')"
+
+  # Una fila de AC con identificador de WP (`F3-04`) no es un AC.
+  if ! nota_es_id "$_id"; then
+    continue
+  fi
 
   # El test viene como  ruta · "nombre"
   test_="${_test##*·}"

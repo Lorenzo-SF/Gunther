@@ -5,13 +5,13 @@
 #
 # Qué trae (son los AC que NO se pueden cerrar sin hardware):
 #
-#   1. La salida real de `llama-server --list-devices`  (AC F2-1)
+#   1. La salida real de `llama-server --list-devices`  (AC F2-AC1)
 #   2. La salida de las herramientas del sistema: nvidia-smi, rocm-smi,
-#      vulkaninfo, system_profiler                        (AC F2-1, convención B)
+#      vulkaninfo, system_profiler                        (AC F2-AC1, convención B)
 #   3. El `kv_mib` que informa `llama-server` al cargar, con TODOS los
-#      números del modelo y del contexto                    (AC F2-6)
+#      números del modelo y del contexto                    (AC F2-AC6)
 #   4. Los valores crudos del GGUF (block_count, head_count, head_count_kv,
-#      key_length, value_length, ...)                       (AC F2-6)
+#      key_length, value_length, ...)                       (AC F2-AC6)
 #
 # Al final imprime un bloque `===== INICIO =====` / `===== FIN =====` con
 # todo lo recogido: eso es lo que hay que pegar en el chat.
@@ -100,8 +100,8 @@ else
   LLAMA=""
 fi
 
-# ------------------------------------------------- 3. los devices (AC F2-1)
-titulo "3 · LOS DEVICES QUE VE EL MOTOR  (AC F2-1)"
+# ------------------------------------------------- 3. los devices (AC F2-AC1)
+titulo "3 · LOS DEVICES QUE VE EL MOTOR  (AC F2-AC1)"
 
 if [ -n "$LLAMA" ]; then
   say "--- \$ llama-server --list-devices ---"
@@ -165,7 +165,7 @@ if [ -e /dev/dri ]; then
 fi
 
 # --------------------------------------------------------- 5. el modelo GGUF
-titulo "5 · EL MODELO PARA MEDIR LA KV  (AC F2-6)"
+titulo "5 · EL MODELO PARA MEDIR LA KV  (AC F2-AC6)"
 
 GGUF="${1:-}"
 if [ -z "$GGUF" ]; then
@@ -292,7 +292,7 @@ PYEOF
 fi
 
 # ------------------------------- 7. lo que informa llama-server al cargar
-titulo "7 · LO QUE INFORMA llama-server AL CARGAR  (AC F2-6)"
+titulo "7 · LO QUE INFORMA llama-server AL CARGAR  (AC F2-AC6)"
 
 if [ -n "$LLAMA" ] && [ -n "$GGUF" ]; then
   SERVER_LOG="$DIR/probes/output/llama-server-kv-$FECHA.log"

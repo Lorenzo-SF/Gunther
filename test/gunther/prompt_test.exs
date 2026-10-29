@@ -62,7 +62,12 @@ defmodule Gunther.PromptTest do
       {"que verificar NO es un entregable", "NO es un entregable"},
       {"el criterio de terminacion", "no ha producido nada"},
       {"que el SPEC no se lea entero", "No lo leas\nentero"},
-      {"que los SPEC historicos se ahorren", "son **historicos**"}
+      {"que los SPEC historicos se ahorren", "son **historicos**"},
+      {"que no se termine la sesion con una pregunta", "Nunca acabes la sesión con una pregunta"},
+      {"que los AC de la cola son los unicos del WP", "Los AC que no son tuyos"},
+      {"que check_ac no es una lista de trabajo", "no son tuyos"},
+      {"que WP y AC no se confundan", "no es `F3-AC4`"},
+      {"que no se afirme el estado de un fichero sin mirarlo", "sin mirarlo"}
     ]
 
     test "el prompt incluye todas las piezas obligatorias", %{prompt: prompt} do
@@ -153,6 +158,29 @@ defmodule Gunther.PromptTest do
     test "el prompt no dice que no se puede mergear", %{prompt: prompt} do
       refute prompt =~ "no se mergea",
              "la CI verde permite mergear; lo que no se hace es cerrar la fase"
+    end
+
+    test "el prompt no convierte check_ac.sh en una lista de trabajo", %{prompt: prompt} do
+      # El modelo ejecuto `check_ac.sh --machine`, vio los 15 AC de la fase y
+      # los tomo por su lista de trabajo. `check_ac.sh` es una PUERTA de
+      # verificacion: la cola es `next_task.sh`, y los AC de tu WP son los
+      # que nombra ese script.
+      assert prompt =~ "Los AC que no son tuyos",
+             "el prompt tiene que decir que los AC de la fase no son todos del coder"
+
+      assert prompt =~ "Los tuyos son los que nombra",
+             "el prompt tiene que decir de donde salen los AC del WP"
+    end
+
+    test "el prompt prohibe terminar con una pregunta", %{prompt: prompt} do
+      # En una sesion sin interlocutor, una pregunta es un deadlock: nadie la
+      # contesta y la sesion se acaba sin entregable. El modelo termino la
+      # sesion anterior preguntando que queria que hiciera.
+      assert prompt =~ "Nunca acabes la sesión con una pregunta",
+             "el prompt tiene que prohibir terminar con una pregunta"
+
+      refute prompt =~ ~r/PARA y pregunta al dueño/,
+             "el prompt ya no dice que hay que parar y preguntar"
     end
 
     test "el prompt no trabaja encima de main", %{prompt: prompt} do

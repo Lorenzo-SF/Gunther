@@ -69,8 +69,8 @@ quedan dependen de una máquina con GPU y de una grabación real:
 
 | AC | Qué falta | Por qué |
 | -- | --------- | ------- |
-| F2-1 | La salida **grabada** de `llama-server --list-devices` de CUDA, Vulkan, ROCm y Metal. | No hay GPU en el entorno de trabajo. |
-| F2-6 | La comparación del `kv_mib` calculado por Gunther con el que **informa** `llama-server` al cargar. | Idem: hace falta el motor con un modelo real. |
+| F2-AC1 | La salida **grabada** de `llama-server --list-devices` de CUDA, Vulkan, ROCm y Metal. | No hay GPU en el entorno de trabajo. |
+| F2-AC6 | La comparación del `kv_mib` calculado por Gunther con el que **informa** `llama-server` al cargar. | Idem: hace falta el motor con un modelo real. |
 
 Todo lo demás de F2 está implementado, probado y documentado en
 `docs/fases/F2.md`. El script `probes/f2_datos.sh` recoge en una sola pasada
@@ -406,17 +406,23 @@ hecha, y le toca al dueño firmarla), o una sesión no ha producido nada.
 
 Sin esto, la cola no se puede derivar:
 
-| Tabla | Celdas | Para qué |
-| ----- | ------ | -------- |
-| Los WP de la fase | **3** (`WP`, `Dependencias`, `AC que cierra`) | Qué WP hay y qué cierra cada uno |
-| Los AC y dónde se verifican | **4** (`#`, `AC`, `Test que lo verifica`, `En`) | Qué AC hay y qué test lo verifica |
+| Tabla | Celdas | Identificador | Para qué |
+| ----- | ------ | ------------- | -------- |
+| Los WP de la fase | **3** (`WP`, `Dependencias`, `AC que cierra`) | `Fnn-nn` (`F3-04`) | Qué WP hay y qué cierra cada uno |
+| Los AC y dónde se verifican | **4** (`#`, `AC`, `Test que lo verifica`, `En`) | `Fnn-ACn` (`F3-AC7`) | Qué AC hay y qué test lo verifica |
 
-Se distinguen por el **número de celdas**, no por el nombre del
-identificador: un AC (`F4-12`) y un WP (`F4-12`) pueden llamarse igual.
+Se distinguen por el **número de celdas** y por la **forma del
+identificador**. Antes solo por el número de celdas, y los identificadores
+se parecían: el WP del plan era `F3-01` y el AC de la nota `F3-1`. Un modelo
+que las confundía cerraba el AC equivocado y declaraba un WP terminado sin
+haberlo hecho. Los WP **no** se renombran (`Fnn-nn`), porque el SPEC §19.2 los
+cita (`F1-01`, `F4-03`, `F4-04`) y el SPEC es la ley; los AC sí (`Fnn-ACn`),
+porque son ids locales de la nota.
 
-Una fila que no se reconoce (un número de celdas que no es 3 ni 4) hace
-**fallar** el script. Es mejor que se quede sin saber qué hacer a que decida
-sobre un estado inventado.
+Una fila que no se reconoce (un número de celdas que no es 3 ni 4, o un
+identificador con la forma de la otra tabla) hace **fallar** el script. Es
+mejor que se quede sin saber qué hacer a que decida sobre un estado
+inventado.
 
 ### 4.6 F3 · Provider, WP a WP
 
@@ -424,24 +430,17 @@ F3 es la siguiente fase que **no depende de hardware**, y es la que da un
 sistema de extremo a extremo sobre providers mock y cloud. El orden del plan
 (§4 de `docs/01-plan-de-desarrollo.md`):
 
-| WP | Contenido | El test que lo demuestra |
-| -- | --------- | ------------------------ |
-| F3-01 | Behaviour `Provider`, `Result`, `Chunk`, `Response`; `opts.require` y `opts.context` (G1, G2) | Contrato |
-| F3-02 | `ContractTest` genérico | Se aplica a todos los behaviours existentes |
-| F3-03 | `Provider.Mock` con guion | Escenarios de error |
-| F3-04 | Transporte HTTP/SSE | Cancelación, contrapresión |
-| F3-05 | Providers `OpenAI`, `Anthropic`, `Ollama` | Contra servidor simulado |
-| F3-06 | `Provider.LlamaCpp` modo `external` | Contra `llama-server` real |
-| F3-07 | Salida estructurada §4.2.1 | Invariante «nunca `nil` en silencio» |
-| F3-08 | Commit de stream y `stream!/2` (§2.9) | Sin procesos vivos tras `cancel_grace_ms` |
-| F3-09 | Contadores de tokens y registro de `Tokenizer`; límite de adjuntos por tipo | Contrato |
+Los nueve WP de F3 y su contenido están en el plan
+(`docs/01-plan-de-desarrollo.md` §4, `### F3 · Provider`). **No se copian
+aquí**: la misma verdad en dos sitios se separa, y el plan es su sitio. El
+mapeo WP → AC está en la nota de fase (`docs/fases/F3.md`), que es el otro
+sitio, y tampoco se duplica.
 
-El mapeo WP → AC está en la nota de fase (`docs/fases/F3.md`), no aquí: la
-nota es su sitio, y copiarla aquí es tener la misma verdad en dos sitios.
+Lo que sí se dice aquí, porque no está en ninguna de las dos: los WP que
+**no** dependen de una GPU se pueden hacer enteros en local.
 
-Los WP que **no** dependen de una GPU se pueden hacer enteros en local. F3-06
-necesita un `llama-server`: sirve un mock que hable el protocolo, que es lo que
-hace `Gunther.Provider.Mock`.
+`F3-06` necesita un `llama-server`: sirve un mock que hable el protocolo, que
+es lo que hace `Gunther.Provider.Mock`.
 
 Un aviso de alcance: `Provider.Mock` y `ContractTest` **ya existen** de la
 F1 (`lib/gunther/core/provider/mock.ex` y `contract_test.ex`). El WP no es
@@ -461,8 +460,8 @@ máquina con GPU. Lo que sí puede hacer:
   compilación). **Un fixture sin cabecera no se admite.**
 
 Cuando haya GPU, la secuencia es: ejecutar el probe → pegar la salida →
-comparar el `kv_mib` calculado con el que informa el motor → cerrar F2-1 y
-F2-6 en la nota de fase → **el dueño** revisa y approve el cierre.
+comparar el `kv_mib` calculado con el que informa el motor → cerrar F2-AC1 y
+F2-AC6 en la nota de fase → **el dueño** revisa y approve el cierre.
 
 ---
 

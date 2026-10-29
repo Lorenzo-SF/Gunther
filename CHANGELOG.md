@@ -4,6 +4,36 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado
 
 ## [Sin publicar]
 
+### Los identificadores que ya no se pueden confundir, y el prompt que no pregunta — 2026-10-29
+
+- **WP y AC tienen formas distintas: `Fnn-nn` y `Fnn-ACn`.** Antes, el WP del
+  plan era `F3-01` y el AC de la nota `F3-1`: la misma forma con un dígito de
+  diferencia. Una sesión real del coder confundió los dos, cerró el AC
+  equivocado y terminó con un plan de cinco pasos mezclando AC de varios WP.
+  Los AC de las notas pasan a `Fnn-ACn` (`F3-AC7`). Los WP **no** se renombran:
+  el SPEC §19.2 los cita (`F1-01`, `F4-03`, `F4-04`) y el SPEC es la ley.
+- **Una fila con el identificador de la forma equivocada hace fallar el
+  script.** `scripts/lib_nota.sh` valida cada fila: una fila de tres celdas
+  tiene que ser un WP y una de cuatro un AC. Antes el discriminante era
+  **solo** el número de celdas; ahora es también la forma del identificador,
+  que es un discriminante más fuerte. Un checker que se come una fila sin
+  decir nada es un checker con OK falso.
+- **El prompt no termina con una pregunta.** En una sesión sin interlocutor,
+  una pregunta es un deadlock: nadie la contesta y la sesión se acaba sin
+  entregable. El prompt dice que haga, que anote la duda en la nota de fase y
+  que entregue. Y que **los AC de `check_ac.sh` no son los suyos**: los suyos
+  son los que nombra `next_task.sh`.
+- **El prompt no afirma el estado de un fichero sin mirarlo.** El modelo dijo
+  que un test «existe» y que otro estaba «partial», y ninguno de los dos
+  existía. Ahora el prompt lo dice: un fichero que no has abierto no existe
+  para ti.
+- **`test/gunther/scripts/identificadores_test.exs`**: vigila que los dos
+  espacios de nombres no se mezclen, en el plan, en las notas y en la
+  biblioteca que las parsea. **Comprobado que detecta la mutación**: un AC
+  que vuelve a la forma de WP lo hace fallar.
+- **Dos warnings de compilación arreglados** en `router_llm_test.exs` y
+  `router/llm_test.exs`: ruido que el CI no veía porque compila en `:dev`.
+
 ### El bucle que relanza al coder, y el JSON que se rompía — 2026-10-29
 
 - **`scripts/coder.sh`: una sesión del coder, y el bucle que las repite.**
@@ -38,10 +68,10 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado
 - **`scripts/next_task.sh`: la siguiente tarea, deducida del repositorio.** No hay ninguna lista de tareas escrita a mano: la cola sale de tres fuentes que no se pueden desincronizar entre sí — el orden recomendado del plan (`docs/01`), las fases **cerradas** del registro (las que tienen fecha de fin; «en curso» no es una fecha) y la nota de fase. El WP que toca es el primero cuyos AC **no** están todos en verde, y eso lo dice `scripts/check_ac.sh --machine`, que **ejecuta los tests de verdad**. Un WP está terminado cuando sus AC pasan: no hay un «hecho» escrito a mano que se pueda quedar viejo. El script sale con 0 y la tarea, o con 1 y «no queda trabajo».
 - **`scripts/check_ac.sh --machine`**: el estado de cada AC, una línea por AC (`id`, estado, ruta, nombre). Es lo que consume `next_task.sh`, que **no** reimplementa la verificación: dos lectores de la misma tabla divergen, y el que diverge se equivoca sin que se note. La salida del modo normal **no ha cambiado**: es byte a byte la de antes.
 - **`BLOQUEADA` y `PENDIENTE` se distinguen** en la salida `--machine`. Cuentan igual en el informe (los dos son AC sin cumplir), pero solo el segundo es trabajo del coder: sin esa distinción, un WP cuyo único AC pendiente depende del hardware no terminaría nunca, y el coder recibiría la misma tarea una sesión tras otra.
-- **`docs/fases/F3.md`**: la nota de fase de F3, con los AC de §19 y de §19.1 con su test, los WP con sus dependencias, las decisiones locales y los riesgos. Incluye el **AC diferido de F1** (`F1-9`), que hasta ahora no lo comprobaba nadie: `chat/2` no existe hasta F3, y ahora está escrito en la nota de F3 con su test. Diferir un AC no es cumplirlo, pero tampoco es olvidarlo.
-- **La nota de fase lleva dos tablas**, y se distinguen por el **número de celdas**, no por el nombre del identificador: un AC (`F4-12`) y un WP (`F4-12`) pueden llamarse igual. La de WP tiene tres (`WP`, `Dependencias`, `AC que cierra`) y la de AC cuatro (`#`, `AC`, `Test que lo verifica`, `En`). Una fila que no se reconoce **hace fallar el script**: es mejor que se quede sin saber qué hacer a que decida sobre un estado inventado.
+- **`docs/fases/F3.md`**: la nota de fase de F3, con los AC de §19 y de §19.1 con su test, los WP con sus dependencias, las decisiones locales y los riesgos. Incluye el **AC diferido de F1** (`F1-AC9`), que hasta ahora no lo comprobaba nadie: `chat/2` no existe hasta F3, y ahora está escrito en la nota de F3 con su test. Diferir un AC no es cumplirlo, pero tampoco es olvidarlo.
+- **La nota de fase lleva dos tablas**, y se distinguen por el **número de celdas**: la de WP tiene tres (`WP`, `Dependencias`, `AC que cierra`) y la de AC cuatro (`#`, `AC`, `Test que lo verifica`, `En`). Una fila que no se reconoce **hace fallar el script**: es mejor que se quede sin saber qué hacer a que decida sobre un estado inventado. (Después, en la entrada de arriba, los identificadores también se distinguen por su forma.)
 - **`scripts/lib_nota.sh`**: la lectura compartida de las tablas de fase. `check_ac.sh` y `next_task.sh` no tienen dos copias de la lógica de parseo.
-- **`probes/f3_llama_cpp.sh`**: la recogida de datos del AC **F3-14**, el único
+- **`probes/f3_llama_cpp.sh`**: la recogida de datos del AC **F3-AC14**, el único
   AC de F3 que necesita el motor. Arranca el `llama-server` **a mano** (que es
   justo lo que hace el modo `external`: no gestionar el engine) y le hace las
   cuatro peticiones que hace el provider —`/v1/models`, `/v1/chat/completions`

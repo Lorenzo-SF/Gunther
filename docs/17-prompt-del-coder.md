@@ -145,6 +145,45 @@ SPEC en varias lecturas: con AA-LCR 52,38, leer
 112 000 tokens de SPEC es justo como se pierde el hilo.
 
 
+## Por qué el prompt no termina con una pregunta
+
+La segunda sesión real falló por lo mismo, con un matiz distinto. El Nemotron
+corrió `check_ac.sh --machine`, imprimió la tabla de los **quince** AC de la
+fase, afirmó que dos ficheros de test existían (**ninguno de los dos
+existía**), inventó un plan de cinco pasos mezclando AC de varios WP, terminó
+con «¿Quieres que haga 1)… 2)… 3)… 4…?» y **escribió cero ficheros**.
+
+Tres cosas se/learn de esa sesión, y las tres están en el prompt:
+
+1. **Los AC de `check_ac.sh` no son los del coder.** El script lista los AC de
+   **la fase entera**, y muchos salen en `FALLA`. Los del coder son los que
+   nombra `next_task.sh`. El prompt lo dice dos veces, porque es el error que
+   la sesión cometió: implementó AC de otros WP y dejó el suyo a medias.
+2. **En una sesión sin interlocutor, una pregunta es un deadlock.** Nadie la
+   contesta, y la sesión se acaba sin entregable. El prompt dice que **haga**:
+   que anote la duda en la nota de fase y que entregue el trabajo. Y el
+   apartado «Si algo no cuadra» ya no dice «PARA y pregunta al dueño»: dice
+   que nada de eso detiene la sesión.
+3. **No se afirma el estado de un fichero sin mirarlo.** La sesión afirmó que
+   `contract_test_test.exs` «exists» y que `stream_test.exs` estaba
+   «partial». Los dos ficheros no existían. Un prompt que dice «un fichero
+   que no has abierto no existe para ti» evita el invento.
+
+## Por qué WP y AC tienen formas distintas
+
+Los WP del plan son `F3-01`…`F3-09` y los AC de la nota eran `F3-1`…`F3-14`:
+**la misma forma con un dígito de diferencia**. La segunda sesión mapeó
+`WP F3-01` a los AC `F3-1` y `F3-2`, que son de `F3-07`.
+
+Un identificador que se parece a otro es un error esperando a pasar. Los AC
+de las notas pasan a `Fnn-ACn` (`F3-AC7`), con el infijo `AC`. Los WP **no**
+se renombran: el SPEC §19.2 los cita (`F1-01`, `F4-03`, `F4-04`) y el SPEC
+es la ley, así que renombrarlos dejaría referencias colgando.
+
+El prompt lo dice con una tabla, y `test/gunther/scripts/identificadores_test.exs`
+lo vigila en el plan, en las notas y en la biblioteca que las parsea: un AC
+con forma de WP hace fallar el script.
+
 ## La pregunta del final
 
 El prompt acaba con:
@@ -166,6 +205,9 @@ verde.
   es una tarea que se queda vieja.
 - **La lista de ficheros del repo.** La tiene `docs/05-estructura-del-repositorio.md`.
 - **El detalle de los AC de F3.** Los tiene el SPEC (§19) y la nota de fase.
+- **La lista de AC de la fase.** La imprime `check_ac.sh`, que es una **puerta
+  de verificación**, no una lista de trabajo. Los AC del coder son los que
+  nombra `next_task.sh`.
 - **La configuración del servidor de inferencia.** Es de la máquina, no del
   trabajo: está en [`16-nemotron-coder.md`](16-nemotron-coder.md), que es
   donde el dueño la consulta, no donde el modelo la lee.

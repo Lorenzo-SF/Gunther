@@ -5,7 +5,7 @@
 #
 # Qué trae (el AC que NO se puede cerrar sin hardware):
 #
-#   AC F3-14 — `Provider.LlamaCpp` en modo `external` contra un
+#   AC F3-AC14 — `Provider.LlamaCpp` en modo `external` contra un
 #   `llama-server` que ya está corriendo.
 #
 # El modo `external` es el que **no gestiona** el engine: Gunther no lo
@@ -223,7 +223,7 @@ peticion "POST /v1/completions" \
 # ------------------------------------------------------------ 4. resumen
 titulo "4 · LO QUE HACE GUNTHER CON ESTO"
 
-say "La prueba de aceptacion de F3-14 es que el provider de Gunther, en"
+say "La prueba de aceptacion de F3-AC14 es que el provider de Gunther, en"
 say "modo external, habla con ESTE servidor. Para verlo:"
 say ""
 say "  1. Con el servidor arrancado como lo de arriba (sin pararlo),"
@@ -231,7 +231,7 @@ say "  2. arranca Gunther contra el, con el provider LlamaCpp en external:"
 say ""
 say "       el provider se registra con la URL http://127.0.0.1:$PORT"
 say ""
-say "  3. y se ejecuta el test de F3-9 con la URL real."
+say "  3. y se ejecuta el test de F3-AC9 con la URL real."
 say ""
 say "El test que hay que ejecutar es:"
 say ""
@@ -257,4 +257,4 @@ tail -20 "$SERVER_LOG"
 say ""
 say "===== FIN ====="
 say ""
-say "Pega este bloque en el chat, junto con la salida del test de F3-9."
+say "Pega este bloque en el chat, junto con la salida del test de F3-AC9."

@@ -119,15 +119,15 @@ cat > "$ENTORNO/docs/fases/F3.md" <<'NOTA'
 
 | WP | Dependencias | AC que cierra |
 | --- | --- | --- |
-| F3-01 | — | F3-1 |
-| F3-02 | F3-01 | F3-2 |
+| F3-01 | — | F3-AC1 |
+| F3-02 | F3-01 | F3-AC2 |
 
 ## Los AC y donde se verifican
 
 | # | AC | Test que lo verifica | En |
 | --- | --- | --- | --- |
-| F3-1 | El behaviour | `test/a.exs` · "uno" | F3 |
-| F3-2 | El contrato | `test/b.exs` · "dos" | F3 |
+| F3-AC1 | El behaviour | `test/a.exs` · "uno" | F3 |
+| F3-AC2 | El contrato | `test/b.exs` · "dos" | F3 |
 NOTA
 
 # El doble de la cola: devuelve la tarea, y va cambiando segun cuantas
@@ -176,12 +176,12 @@ cola_con() {
   case "$primera" in
     1)
       cat > "$TMP/cola.tsv" <<'C'
-{"tarea": "F3-01", "fase": "F3", "contenido": "Behaviour", "pruebas": "Contrato", "dependencias": "—", "ac_pendientes": "F3-1", "ac_bloqueados": ""}
+{"tarea": "F3-01", "fase": "F3", "contenido": "Behaviour", "pruebas": "Contrato", "dependencias": "—", "ac_pendientes": "F3-AC1", "ac_bloqueados": ""}
 C
       ;;
     2)
       cat > "$TMP/cola.tsv" <<'C'
-{"tarea": "F3-02", "fase": "F3", "contenido": "ContractTest", "pruebas": "Contrato", "dependencias": "F3-01", "ac_pendientes": "F3-2", "ac_bloqueados": ""}
+{"tarea": "F3-02", "fase": "F3", "contenido": "ContractTest", "pruebas": "Contrato", "dependencias": "F3-01", "ac_pendientes": "F3-AC2", "ac_bloqueados": ""}
 C
       ;;
     *)

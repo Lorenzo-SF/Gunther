@@ -48,7 +48,7 @@ defmodule Gunther.RouterLlmTest do
     )
   end
 
-  defp opts(extra \\ []) do
+  defp opts(extra) do
     Keyword.merge(
       [
         catalog: catalog([model(:a), model(:b)]),

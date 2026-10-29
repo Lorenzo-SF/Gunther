@@ -27,12 +27,12 @@ AC de F2 que no se pueden cerrar en un sandbox sin GPU.
 
 Trae:
 
-1. la salida real de `llama-server --list-devices` (AC F2-1);
+1. la salida real de `llama-server --list-devices` (AC F2-AC1);
 2. las herramientas del sistema (`nvidia-smi`, `rocm-smi`, `vulkaninfo`,
-   `system_profiler`): la **convención B** de la medida (AC F2-1);
+   `system_profiler`): la **convención B** de la medida (AC F2-AC1);
 3. los valores crudos del GGUF (los que lee la fórmula de KV);
 4. el `kv_mib` que informa `llama-server` al cargar, con todos los números
-   del modelo y del contexto (AC F2-6);
+   del modelo y del contexto (AC F2-AC6);
 5. y, si hay Elixir, la **comparación** entre ese valor y el de la fórmula de
    `Gunther.Resource.Weight`.
 
@@ -46,7 +46,7 @@ ocupa la VRAM.
 ## El probe de F3 (el provider `LlamaCpp` contra un servidor real)
 
 `f3_llama_cpp.sh` **no** es una puerta: es la recogida de datos del AC
-**F3-14**, que es el único AC de F3 que no se puede cerrar sin el motor.
+**F3-AC14**, que es el único AC de F3 que no se puede cerrar sin el motor.
 
 ```bash
 ./probes/f3_llama_cpp.sh [RUTA_DEL_GGUF]
@@ -70,4 +70,4 @@ tener probe.
 
 Al final imprime un bloque `===== INICIO =====` / `===== FIN =====` con todo
 lo recogido, que es lo que hay que pegar en el chat **junto con la salida
-del test de F3-9**.
+del test de F3-AC9**.

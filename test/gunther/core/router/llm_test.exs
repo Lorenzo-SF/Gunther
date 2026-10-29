@@ -177,7 +177,6 @@ defmodule Gunther.Router.LlmTest do
     end
 
     test "el decisor no ve el contenido de assistant" do
-      spec = spec()
       view = Gunther.DecisionView.from_messages(messages(), [:user])
 
       assert view.text == "arregla este bug"

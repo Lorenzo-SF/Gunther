@@ -14,7 +14,7 @@ Se rellena al cerrar cada fase y cada puerta (formato en `04-f0-puertas.md`). Lo
 | **F0**  | 2026-10-27 | **2026-10-28** | 11 puertas medidas con scripts reproducibles (`probes/`) y la salida integra en `probes/output/` | Sin desviaciones | G-05, G-06 y G-17 fallan y tienen rama B aplicada |
 | **F1**  | 2026-10-28 | **2026-10-28** | Nucleo, router (las seis capas), pipeline de §2.5. 10 AC de F1 ejecutados (`scripts/check_ac.sh docs/fases/F1.md`) y 10 comprobaciones de cierre (`scripts/check_phase.sh F1`) | Sin desviaciones del SPEC; un AC diferido a F3 con razon escrita | La capa `:rule` corta cuando opino (§6.10): `:embedding` y `:llm` no corren |
 | **F2**  | 2026-10-28 | **en curso**    | Tipos de ggml, parser GGUF, formula de KV, ledger (A y B), Placer y detectores. 10 AC cumplidos y 2 pendientes (`scripts/check_ac.sh docs/fases/F2.md`); 11 comprobaciones de cierre en verde (`scripts/check_phase.sh F2`); **CI verde en `main`** (run `f836f58`, los seis jobs en `success`) | `swa_full = true` es el defecto medido de llama.cpp: la formula de SWA es exacta, no una cota. Pide revision r10 | 2 AC bloqueados por hardware (salidas reales de `--list-devices` y `kv_mib` real) |
-| **F3**  | 2026-10-29 |                | Nota de fase escrita (`docs/fases/F3.md`): AC de §19 y de §19.1 con su test, el AC diferido de F1 (F1-9), un AC bloqueado por hardware y los WP con sus dependencias. La cola de trabajo pasa a ser **derivada** (`scripts/next_task.sh`) | Sin desviaciones del SPEC | La nota de fase lleva **dos tablas** (WP de 3 celdas y AC de 4 celdas): las dos las lee el script de la cola, y una fila que no se reconoce hace fallar el script en vez de decidir sobre un estado inventado |
+| **F3**  | 2026-10-29 |                | Nota de fase escrita (`docs/fases/F3.md`): AC de §19 y de §19.1 con su test, el AC diferido de F1 (`F1-AC9`), un AC bloqueado por hardware y los WP con sus dependencias. La cola de trabajo pasa a ser **derivada** (`scripts/next_task.sh`) | Sin desviaciones del SPEC | La nota de fase lleva **dos tablas** (WP de 3 celdas y AC de 4 celdas): las dos las lee el script de la cola, y una fila que no se reconoce hace fallar el script en vez de decidir sobre un estado inventado |
 | **F4**  | pendiente  |                |                                                                                                                    |              |                                                                               |
 | **F5**  | pendiente  |                |                                                                                                                    |              |                                                                               |
 | **F6**  | pendiente  |                |                                                                                                                    |              |                                                                               |
@@ -507,21 +507,26 @@ lista **es** el repositorio.
 ### Lo que hace falta para que la cola se pueda derivar
 
 La nota de fase lleva **dos tablas**, y se distinguen por el **numero de
-celdas**, no por el nombre del identificador (un AC `F4-12` y un WP `F4-12`
-pueden llamarse igual):
+celdas** y por la **forma del identificador**:
 
-| Tabla | Celdas | Contenido |
-| ----- | ------ | --------- |
-| Los WP de la fase | 3 | `WP`, `Dependencias`, `AC que cierra` |
-| Los AC y donde se verifican | 4 | `#`, `AC`, `Test que lo verifica`, `En` |
+| Tabla | Celdas | Identificador | Contenido |
+| ----- | ------ | ------------- | --------- |
+| Los WP de la fase | 3 | `Fnn-nn` (`F3-04`) | `WP`, `Dependencias`, `AC que cierra` |
+| Los AC y donde se verifican | 4 | `Fnn-ACn` (`F3-AC7`) | `#`, `AC`, `Test que lo verifica`, `En` |
 
 **Una fila que no se reconoce hace fallar el script.** Es mejor que se quede
 sin saber que hacer a que decida sobre un estado inventado: un checker con
 OK falso es peor que no tener checker.
 
+**Por que el infijo `AC`.** El WP del plan era `F3-01` y el AC de la nota
+`F3-AC1`: la misma forma con un digito de diferencia. Una sesion real del
+coder confudio los dos y cerro el AC equivocado. Los WP **no** se renombran,
+porque el SPEC §19.2 los cita (`F1-01`, `F4-03`, `F4-04`) y el SPEC es la
+ley; los AC si, porque son ids locales de la nota.
+
 ### El AC diferido no se pierde
 
-`F1-9` («`chat/2` sin contexto se comporta igual que antes») estaba
+`F1-AC9` («`chat/2` sin contexto se comporta igual que antes») estaba
 diferido a F3 desde la nota de F1. Ahora esta **escrito en la nota de F3**,
 con su test, y `check_ac.sh docs/fases/F3.md F3` lo comprueba. Diferir un AC
 no es cumplirlo, pero tampoco es olvidarlo.
